@@ -22,8 +22,7 @@ We want to compute the dot product of two vectors `a` and `b` of size `N`:
 
 dot = a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + ... + a[N-1]*b[N-1]
 
-Let's imagin that our class is going to divide the work of calculaing the elements of this dot product between its members.
-We are going to give each person a "chunk" of the dot product to caluclate so most of the work can be done in parallel, and then one perons will be responcble for gatering all the differnt chunks and adding thier results together.
+Let's imagine that our class is going to divide the work of calculating the elements of this dot product between its members. We are going to give each person a "chunk" of the dot product to calculate so most of the work can be done in parallel, and then one person will be responsible for gathering all the different chunks and adding their results together.
 
 ---
 
@@ -40,9 +39,9 @@ chunk_size = N / P = 8 / 4 = 2
 
 Each process will have two elements to calculate. 
 
-We will organize our processes into ranks so it will be easier for our gatherer to track them. 
+We'll organize our processes into ranks to make it easier for the gatherer to track them
 
-## 🔁 Work Division
+## Work Division
 
 | Rank (Process) | Index Range | Operation                       |
 |----------------|-------------|----------------------------------|
@@ -76,6 +75,14 @@ Total dot product:
 | 3    | a[6], a[7]     | 7×2 + 8×1        | 22     |
 
 global_dot = 22 + 38 + 38 + 22 = 120
+
+
+# Serial C code for dot prodcut. 
+
+```
+
+
+
 
 
 
