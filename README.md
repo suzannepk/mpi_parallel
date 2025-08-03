@@ -29,8 +29,8 @@ Let's imagine that our class is going to divide the work of calculating the elem
 
 Let’s say we have:
 
-- `N = 8` total elements to add  
-- `P = 4` people (lets call these people "processes" because it will help making the transtion to MPI later )
+- N = 8 total elements to add  
+- P = 4 people (lets call these people "processes" because it will help making the transtion to MPI later )
 
 To split the work evenly:
 
@@ -57,7 +57,7 @@ global_dot = local_Rank0 + local_Rank1 + local_Rank2 + local_Rank3
 
 Let:
 
-```c
+
 a = [1, 2, 3, 4, 5, 6, 7, 8]
 b = [8, 7, 6, 5, 4, 3, 2, 1]
 
