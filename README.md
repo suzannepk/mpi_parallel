@@ -137,6 +137,8 @@ int main(int argc, char** argv) {
     double *b_local = malloc(chunk * sizeof(double));
 
     // Only rank 0 initializes the full vectors
+   // We use malloc to get access to the heap memory, so each MPI process can allocate a chunk of data at runtime,
+   // since stack arrays are limited in size and not suitable for dynamic, distributed work.
     if (rank == 0) {
         a = malloc(N * sizeof(double));   // Allocate memory for vector a
         b = malloc(N * sizeof(double));   // Allocate memory for vector b
