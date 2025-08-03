@@ -82,7 +82,7 @@ The code below is written in C. In this we do the serial dot prodcut.
 
  
 
-```
+c ```
 #include <stdio.h>           // Include standard input/output header for printf
 
 #define N 1000               // Define a constant N = 1000, size of the arrays
@@ -106,7 +106,7 @@ int main() {
 Now we will use the same logic that we did when we imagined that we our calss was a human paralle procoessor.
 
 
-```
+c```
 #include <stdio.h>      // For printf
 #include <stdlib.h>     // For malloc and free
 #include <mpi.h>        // For MPI functions
