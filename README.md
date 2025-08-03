@@ -100,7 +100,8 @@ int main() {
 
     return 0;                    // Exit the program successfully
 }
-```c
+
+```
 
 
 Now we will use the same logic that we did when we imagined that we our calss was a human paralle procoessor.
@@ -180,7 +181,7 @@ int main(int argc, char** argv) {
     return 0;   // Exit the program
 }
 
-```c
+```
 
 
 
