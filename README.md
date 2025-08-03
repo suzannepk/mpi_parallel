@@ -16,8 +16,6 @@ This hands-on lesson walks through:
 
 # Parallelizing the Dot Product: The Math of Chunking
 
-## Goal
-
 We want to compute the dot product of two vectors `a` and `b` of size `N`:
 
 dot = a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + ... + a[N-1]*b[N-1]
