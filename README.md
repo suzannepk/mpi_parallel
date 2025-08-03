@@ -24,7 +24,6 @@ dot = a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + ... + a[N-1]*b[N-1]
 
 Let's imagine that our class is going to divide the work of calculating the elements of this dot product between its members. We are going to give each person a "chunk" of the dot product to calculate so most of the work can be done in parallel, and then one person will be responsible for gathering all the different chunks and adding their results together.
 
----
 
 ## Step-by-Step: Chunking the Work
 
@@ -77,10 +76,111 @@ Total dot product:
 global_dot = 22 + 38 + 38 + 22 = 120
 
 
-# Serial C code for dot prodcut. 
+# Serial C code for dot product. 
+
+The code below is written in C. In this we do the serial dot prodcut. 
+
+ 
 
 ```
+#include <stdio.h>           // Include standard input/output header for printf
 
+#define N 1000               // Define a constant N = 1000, size of the arrays
+
+int main() {
+    double a[N], b[N], dot = 0.0;  // Declare arrays a and b of size N, and initialize dot to 0.0
+
+    for (int i = 0; i < N; i++) {  // Loop over each index from 0 to N-1
+        a[i] = i * 0.5;            // Fill array a with values: a[i] = i * 0.5
+        b[i] = i * 2.0;            // Fill array b with values: b[i] = i * 2.0
+        dot += a[i] * b[i];        // Accumulate the product of a[i] and b[i] into dot
+    }
+
+    printf("Dot product: %f\n", dot);  // Print the final dot product result
+
+    return 0;                    // Exit the program successfully
+}
+```
+
+
+Now we will use the same logic that we did when we imagined that we our calss was a human paralle procoessor.
+
+
+```
+#include <stdio.h>      // For printf
+#include <stdlib.h>     // For malloc and free
+#include <mpi.h>        // For MPI functions
+
+#define N 10000000      // Total number of elements in each vector
+
+int main(int argc, char** argv) {
+    int rank, size;                     // rank = ID of the current process, size = total number of processes
+    double *a = NULL, *b = NULL;        // These pointers will hold the full vectors (on rank 0 only)
+    double local_dot = 0.0;             // Each process will compute a portion of the dot product
+    double global_dot = 0.0;            // Final result of the full dot product (only meaningful on rank 0)
+
+    // Initialize the MPI environment
+    MPI_Init(&argc, &argv);
+
+    // Get the rank of the current process
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    // Get the total number of processes
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    // Calculate how many elements each process should handle
+    int chunk = N / size;
+
+    // Allocate local arrays for this process to hold its chunk of data
+    double *a_local = malloc(chunk * sizeof(double));
+    double *b_local = malloc(chunk * sizeof(double));
+
+    // Only rank 0 initializes the full vectors
+    if (rank == 0) {
+        a = malloc(N * sizeof(double));   // Allocate memory for vector a
+        b = malloc(N * sizeof(double));   // Allocate memory for vector b
+        for (int i = 0; i < N; i++) {
+            a[i] = i * 0.5;               // Fill vector a with sample values
+            b[i] = i * 2.0;               // Fill vector b with sample values
+        }
+    }
+
+    // Distribute parts of vector a from rank 0 to all processes
+    MPI_Scatter(a, chunk, MPI_DOUBLE,    // Send chunk elements from a
+                a_local, chunk, MPI_DOUBLE,  // Receive chunk elements into a_local
+                0, MPI_COMM_WORLD);      // Root is rank 0
+
+    // Distribute parts of vector b similarly
+    MPI_Scatter(b, chunk, MPI_DOUBLE,
+                b_local, chunk, MPI_DOUBLE,
+                0, MPI_COMM_WORLD);
+
+    // Each process computes the dot product of its own chunk
+    for (int i = 0; i < chunk; i++) {
+        local_dot += a_local[i] * b_local[i];
+    }
+
+    // Reduce all local_dot values into global_dot on rank 0 using a sum operation
+    MPI_Reduce(&local_dot, &global_dot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    // Rank 0 prints the result
+    if (rank == 0) {
+        printf("Global dot product: %f\n", global_dot);
+        free(a);   // Free full vectors on rank 0
+        free(b);
+    }
+
+    // All processes free their local memory
+    free(a_local);
+    free(b_local);
+
+    // Finalize the MPI environment
+    MPI_Finalize();
+
+    return 0;   // Exit the program
+}
+
+```
 
 
 
