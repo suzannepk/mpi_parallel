@@ -1,4 +1,4 @@
-# MPI Intro
+**# MPI Intro
 
 This repo teaches parallel thinking and introduces MPI in a 40-minute hands-on lesson.
 
@@ -186,11 +186,49 @@ int main(int argc, char** argv) {
 
 ```
 
+OK Now it is your turn. We are going to do a vector addtion.
+
+Here is the serial code. 
+
+You will need to: 
+
+- Initialize MPI and get rank and size.
+- Calculate chunk size = N / size.
+- Allocate local arrays (a_local, b_local, c_local).
+- Use MPI_Scatter to send parts of a and b from rank 0 to all processes.
+- Each process performs addition on its chunk.
+- Use MPI_Gather to send the local results back to rank 0.
+- Rank 0 prints first and last elements to check correctness.
+- Finalize MPI.
+
+
+
+```
+#include <stdio.h>
+#include <stdlib.h>
+
+#define N 1000000
+
+int main() {
+    double a[N], b[N], c[N];
+
+    for (int i = 0; i < N; i++) {
+        a[i] = i * 0.5;
+        b[i] = i * 2.0;
+    }
+
+    for (int i = 0; i < N; i++) {
+        c[i] = a[i] + b[i];
+    }
+
+    printf("c[0] = %f, c[N-1] = %f\n", c[0], c[N-1]);
+    return 0;
+}
+
+```
 
 
 
 
 
-
-
-
+**
