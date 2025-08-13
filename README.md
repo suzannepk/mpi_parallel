@@ -122,13 +122,6 @@ In the example we ahave been following this is:
 So for that example, that means 
 ## Work Division for Dot Product
 
- Calculation  | Result |     
---------------|--------|
- 1×8 + 2×7    | 22     |
- 3×6 + 4×5    | 38     |
- 5×4 + 6×3    | 38     |
- 7×2 + 8×1    | 22     |
-
 | Index Range (Global) | Rank | Local Index | Operation (Global Index)  | Operation (Local Index)                             | Calculation  | Result |   
 |----------------------|------|-------------|---------------------------|-----------------------------------------------------|--------------|--------|
 | 0–1                  | 0    | 0, 1        | `a[0]b[0] + a[1]b[1]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 1×8 + 2×7    | 22     |
@@ -137,9 +130,17 @@ So for that example, that means
 | 6–7                  | 3    | 0, 1        | `a[6]b[6] + a[7]b[7]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 7×2 + 8×1    | 22     |
 
 
-For MPI we inititze the MPI enviroment 
+For a typical MPI program, the number of ranks is set by the programmer in the command used to run the program. This allows the programmer to try different numbers of processes per task without needing to change the code.
 
 
+
+The first thing MPI does when it is initialized, is set up a communicator, called `MPI_COMM_WORLD`. You can think of a communicator as a package that holds all the needed organizational information for its MPI region in the code. Inside the communicator each process is given a rank. The size of the communicator is equal to its total number of ranks.
+
+The part of the code that will be executed in parallel using one MPI communicator is called the MPI Region. It will always be sandwiched between MPI_Init and MPI_Finalize function calls
+
+All MPI function calls within the same MPI region will get each process’s rank from the communicator. The programmer must use logic, based on the MPI rank's ID to differentiate the code paths.
+
+Here is he dot poduct code modify to use the most teachable implementation of of MPI. 
 
 ```c
 #include <stdio.h>      // For printf
@@ -157,10 +158,8 @@ int main(int argc, char** argv) {
     // Initialize the MPI environment
     MPI_Init(&argc, &argv);
 
-    // Get the rank of the current process
+    // Setup to the MPI Communicator and get the rank of the current process and the total number of processes
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    // Get the total number of processes
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     // Calculate how many elements each process should handle N/P
@@ -192,7 +191,7 @@ int main(int argc, char** argv) {
                 b_local, chunk, MPI_DOUBLE,
                 0, MPI_COMM_WORLD);
 
-    // Each process computes the dot product of its own chunk local chunck using the local indicies 
+    // Each process computes the dot product of its own chunk local chunck using the local indicies, 
     for (int i = 0; i < chunk; i++) {
         local_dot += a_local[i] * b_local[i];
     }
