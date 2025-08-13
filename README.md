@@ -192,42 +192,147 @@ Here is the serial code.
 
 You will need to: 
 
-- Initialize MPI and get rank and size.
-- Calculate chunk size = N / size.
-- Allocate local arrays (a_local, b_local, c_local).
-- Use MPI_Scatter to send parts of a and b from rank 0 to all processes.
-- Each process performs addition on its chunk.
-- Use MPI_Gather to send the local results back to rank 0.
-- Rank 0 prints first and last elements to check correctness.
-- Finalize MPI.
-
+- Initialize MPI
+- Create local a,b and c variables 
+- calculate a chunk size based on N. 
+- scatter chuncks of a and b differnt ranks 
 
 
 ```
 #include <stdio.h>
 #include <stdlib.h>
 
-#define N 1000000
+#define N 10
 
 int main() {
-    double a[N], b[N], c[N];
+    // Allocate arrays
+    double *a = malloc(N * sizeof(double));
+    double *b = malloc(N * sizeof(double));
+    double *c = NULL; // Will hold the gathered result on rank 0
 
+    // Initialize a and b
     for (int i = 0; i < N; i++) {
         a[i] = i * 0.5;
         b[i] = i * 2.0;
     }
 
+    // Print arrays A and B
+    printf("Serial Array A: ");
+    for (int i = 0; i < N; i++) {
+        printf("%f ", a[i]);
+    }
+    printf("\n");
+
+    printf("Serial Array B: ");
+    for (int i = 0; i < N; i++) {
+        printf("%f ", b[i]);
+    }
+    printf("\n");
+
+    // Compute C
     for (int i = 0; i < N; i++) {
         c[i] = a[i] + b[i];
     }
 
-    printf("c[0] = %f, c[N-1] = %f\n", c[0], c[N-1]);
+    // Print C
+    printf("Array C: ");
+    for (int i = 0; i < N; i++) {
+        printf("%f ", c[i]);
+    }
+    printf("\n");
+
+    // Free memory
+    free(a);
+    free(b);
+    free(c);
+
     return 0;
 }
 
 ```
+Let's break down the math to help you code. 
+
+First 
 
 
+
+
+```
+#include <stdio.h>
+#include <stdlib.h>
+#include <mpi.h>
+
+#define N 10
+
+int main(int argc, char** argv) {
+    int rank, size;
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+
+    int chunk = N / size;   // Number of elements per process
+    int start = rank * chunk;
+
+    // Allocate local arrays
+    double *a_local = malloc(chunk * sizeof(double));
+    double *b_local = malloc(chunk * sizeof(double));
+    double *c_local = malloc(chunk * sizeof(double));
+
+    // Initialize only the chunk this rank is responsible for
+    for (int i = 0; i < chunk; i++) {
+        a_local[i] = (start + i) * 0.5;  // Same formula as before
+        b_local[i] = (start + i) * 2.0;
+        c_local[i] = a_local[i] + b_local[i];
+    }
+
+    // Allocate full arrays only on rank 0
+    double *a = NULL, *b = NULL, *c = NULL;
+    if (rank == 0) {
+        a = malloc(N * sizeof(double));
+        b = malloc(N * sizeof(double));
+        c = malloc(N * sizeof(double));
+    }
+
+    // Gather all local chunks to rank 0
+    MPI_Gather(a_local, chunk, MPI_DOUBLE, a, chunk, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gather(b_local, chunk, MPI_DOUBLE, b, chunk, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gather(c_local, chunk, MPI_DOUBLE, c, chunk, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    // Print all elements on rank 0
+    if (rank == 0) {
+        printf("Array A: ");
+        for (int i = 0; i < N; i++) {
+            printf("%f ", a[i]);
+        }
+        printf("\n");
+
+        printf("Array B: ");
+        for (int i = 0; i < N; i++) {
+            printf("%f ", b[i]);
+        }
+        printf("\n");
+
+        printf("Array C: ");
+        for (int i = 0; i < N; i++) {
+            printf("%f ", c[i]);
+        }
+        printf("\n");
+
+        free(a);
+        free(b);
+        free(c);
+    }
+
+    free(a_local);
+    free(b_local);
+    free(c_local);
+
+    MPI_Finalize();
+    return 0;
+}
+
+```
 
 
 
