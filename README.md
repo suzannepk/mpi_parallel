@@ -1,4 +1,4 @@
-**# MPI Intro
+# Introduction to MPI and Parallel Computing
 
 This repo teaches parallel thinking and introduces MPI in a 40-minute hands-on lesson.
 
