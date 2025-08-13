@@ -40,12 +40,12 @@ We'll organize our processes into ranks to make it easier for the gatherer to tr
 
 ## Work Division
 
-| Rank (Process) | Index Range | Operation                       |
-|----------------|-------------|----------------------------------|
-| Rank 0         | 0–1         | `a[0]*b[0] + a[1]*b[1]`          |
-| Rank 1         | 2–3         | `a[2]*b[2] + a[3]*b[3]`          |
-| Rank 2         | 4–5         | `a[4]*b[4] + a[5]*b[5]`          |
-| Rank 3         | 6–7         | `a[6]*b[6] + a[7]*b[7]`          |
+| Rank (Process) | Global Index range |       Operation                  |
+|----------------|--------------------|----------------------------------|
+| Rank 1         | 0–1                | `a[0]*b[0] + a[1]*b[1]`          |
+| Rank 2         | 2–3                | `a[2]*b[2] + a[3]*b[3]`          |
+| Rank 3         | 4–5                | `a[4]*b[4] + a[5]*b[5]`          |
+| Rank 4         | 6–7                | `a[6]*b[6] + a[7]*b[7]`          |
 
 Each process computes its own **local dot product**, and then we combine all the local results:
 
@@ -67,12 +67,12 @@ Total dot product:
   = 1*8 + 2*7 + 3*6 + 4*5 + 5*4 + 6*3 + 7*2 + 8*1
   = 120
 
-| Rank | Elements       | Calculation      | Result |
-|------|----------------|------------------|--------|
-| 0    | a[0], a[1]     | 1×8 + 2×7        | 22     |
-| 1    | a[2], a[3]     | 3×6 + 4×5        | 38     |
-| 2    | a[4], a[5]     | 5×4 + 6×3        | 38     |
-| 3    | a[6], a[7]     | 7×2 + 8×1        | 22     |
+| Rank | Elements            | Calculation  | Result |
+|------|---------------------|--------------|--------|
+| 1    | a[0]b[0] + a[1]b[0] | 1×8 + 2×7    | 22     |
+| 2    | a[2]b[2] + a[3]b[3] | 3×6 + 4×5    | 38     |
+| 3    | a[4]b[4] + a[5]b[5] | 5×4 + 6×3    | 38     |
+| 4    | a[6]b[6] + a[7]b[7] | 7×2 + 8×1    | 22     |
 
 global_dot = 22 + 38 + 38 + 22 = 120
 
@@ -103,9 +103,42 @@ int main() {
 }
 
 ```
+Now we’ll apply the same logic we used when we imagined our class acting as a human parallel processor.
+There’s one more concept we need to introduce: global vs. local indexing in MPI.
+
+In our earlier examples, we thought of the data as being globally available — meaning every processor could, in theory, access every index in the arrays:
+
+```a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]```
+
+However, in MPI, each process only gets its own piece of the data. MPI’s job is to distribute the global arrays into local chunks, so each process only stores and works on its own small part.
+We determine how big each process’s chunk will be by the number of Elements, N, divided by the number of processes:
+
+chunk_size = N / P 
+
+In the example we ahave been following this is: 
+
+8 / 4 = 2
+
+So for that example, that means 
+## Work Division for Dot Product
+
+ Calculation  | Result |     
+--------------|--------|
+ 1×8 + 2×7    | 22     |
+ 3×6 + 4×5    | 38     |
+ 5×4 + 6×3    | 38     |
+ 7×2 + 8×1    | 22     |
+
+| Index Range (Global) | Rank | Local Index | Operation (Global Index)  | Operation (Local Index)                             | Calculation  | Result |   
+|----------------------|------|-------------|---------------------------|-----------------------------------------------------|--------------|--------|
+| 0–1                  | 0    | 0, 1        | `a[0]b[0] + a[1]b[1]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 1×8 + 2×7    | 22     |
+| 2–3                  | 1    | 0, 1        | `a[2]b[2] + a[3]b[3]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 3×6 + 4×5    | 38     |
+| 4–5                  | 2    | 0, 1        | `a[4]b[4] + a[5]b[5]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 5×4 + 6×3    | 38     |
+| 6–7                  | 3    | 0, 1        | `a[6]b[6] + a[7]b[7]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 7×2 + 8×1    | 22     |
 
 
-Now we will use the same logic that we did when we imagined that we our calss was a human paralle procoessor.
+For MPI we inititze the MPI enviroment 
+
 
 
 ```c
@@ -130,7 +163,7 @@ int main(int argc, char** argv) {
     // Get the total number of processes
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    // Calculate how many elements each process should handle
+    // Calculate how many elements each process should handle N/P
     int chunk = N / size;
 
     // Allocate local arrays for this process to hold its chunk of data
@@ -159,7 +192,7 @@ int main(int argc, char** argv) {
                 b_local, chunk, MPI_DOUBLE,
                 0, MPI_COMM_WORLD);
 
-    // Each process computes the dot product of its own chunk
+    // Each process computes the dot product of its own chunk local chunck using the local indicies 
     for (int i = 0; i < chunk; i++) {
         local_dot += a_local[i] * b_local[i];
     }
