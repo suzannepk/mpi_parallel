@@ -12,7 +12,7 @@ This hands-on lesson walks through:
 - Understanding how to split up the dot product across multiple workers (before introducing MPI)
 - Writing a basic serial version of the dot product
 - Writing a parallel version using `MPI_Scatter` and `MPI_Reduce`
-- Scaling up to large arrays that benefit from distributed execution
+
 
 # Parallelizing the Dot Product: The Math of Chunking
 
@@ -24,8 +24,6 @@ Here is how that can be implemented in serial C code.
 
 # Serial C code for dot product. 
 
-The code below is written in C. In this we do the serial dot prodcut. 
-
  
 
 ```c
@@ -34,7 +32,7 @@ The code below is written in C. In this we do the serial dot prodcut.
 #define N 1000               // Define a constant N = 1000, size of the arrays
 
 int main() {
-    double a[N], b[N], dot = 0.0;  // Declare arrays a and b of size N, and initialize dot to 0.0
+    double a[N], b[N], dot = 0.0;  // Declare arrays a and b of size N on the stack, and initialize dot to 0.0
 
     for (int i = 0; i < N; i++) {  // Loop over each index from 0 to N-1
         a[i] = i * 0.5;            // Fill array a with values: a[i] = i * 0.5
@@ -50,8 +48,13 @@ int main() {
 ```
 
 Things to note: 
-- This runs the loop in serial, one iteration after the other, but the different iterations of the loop do not depend on each other. For example, dot += a[1] * b[1]; does not depend on dot += a[2] * b[2];. Therefore, there is an opportunity to execute the elements of the loop in parallel on different processors.
-This code places the entire set of vectors in a single pool of memory in an area called the stack. Memory on the stack must be allocated before the program runs, so the size N of all arrays is fixed when the code compiles.
+- This runs the loop in serial, one iteration after the other, but the different iterations of the loop do not depend on each other. For example, dot += a[1] * b[1]; does not depend on dot += a[2] * b[2];. So, there is an opportunity to execute the elements of the loop in parallel on different processors.
+  - C code allocates memory in two main ways: the stack and the heap. These are not physical locations in memory, but rather two different ways the C compiler and runtime manage memory.
+     - Stack: Fast, automatically managed memory for local variables; size must be known at compile time and disappears when the function ends.
+     - Heap: Flexible, manually managed memory for data that can change size or outlive a single function; allocated with malloc/free at runtime.
+-This code places the entire set of vectors in a single pool of memory in an area called the stack. Memory on the stack must be allocated before the program runs, so the size N of all arrays is fixed when the code compiles.
+
+# Parallel Thinking
 
 - Let's imagine that our class is going to divide the work of calculating the elements of this dot product between its members. We are going to give each person a "chunk" of the dot product to calculate so most of the work can be done in parallel, and then one person will be responsible for gathering all the different chunks and adding their results together.
 
@@ -111,14 +114,19 @@ global_dot = 22 + 38 + 38 + 22 = 120
 
 
 
-Now we’ll apply the same logic we used when we imagined our class acting as a human parallel processor.
-There’s one more concept we need to introduce: global vs. local indexing in MPI.
+Now we’ll apply the same logic to building a parallel code. But first some information about the Message Passing Interfave 
 
 In our earlier examples, we thought of the data as being globally available — meaning every processor could, in theory, access every index in the arrays:
 
 ```a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]```
 
-However, in MPI, each process only gets its own piece of the data. MPI’s job is to distribute the global arrays into local chunks, so each process only stores and works on its own small part.
+MPI is **distributed memory parallelism** meaning we need to trasnfer all or some of the data to the memory assocated with each process. 
+
+We could give each process a full copy of the array again, but it is a much better use of memory and more efficient for data transfer if we distribute only the parts of the array that each process works on to the memory associated with that process.
+
+
+ MPI’s job is to distribute the global arrays into local chunks, so each process only stores and works on its own small part.
+
 We determine how big each process’s chunk will be by the number of Elements, N, divided by the number of processes:
 
 chunk_size = N / P 
