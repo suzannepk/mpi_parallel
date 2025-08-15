@@ -20,7 +20,40 @@ We want to compute the dot product of two vectors `a` and `b` of size `N`:
 
 dot = a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + ... + a[N-1]*b[N-1]
 
-Let's imagine that our class is going to divide the work of calculating the elements of this dot product between its members. We are going to give each person a "chunk" of the dot product to calculate so most of the work can be done in parallel, and then one person will be responsible for gathering all the different chunks and adding their results together.
+Here is how that can be implemented in serial C code. 
+
+# Serial C code for dot product. 
+
+The code below is written in C. In this we do the serial dot prodcut. 
+
+ 
+
+```c
+#include <stdio.h>           // Include standard input/output header for printf
+
+#define N 1000               // Define a constant N = 1000, size of the arrays
+
+int main() {
+    double a[N], b[N], dot = 0.0;  // Declare arrays a and b of size N, and initialize dot to 0.0
+
+    for (int i = 0; i < N; i++) {  // Loop over each index from 0 to N-1
+        a[i] = i * 0.5;            // Fill array a with values: a[i] = i * 0.5
+        b[i] = i * 2.0;            // Fill array b with values: b[i] = i * 2.0
+        dot += a[i] * b[i];        // Accumulate the product of a[i] and b[i] into dot
+    }
+
+    printf("Dot product: %f\n", dot);  // Print the final dot product result
+
+    return 0;                    // Exit the program successfully
+}
+
+```
+
+Things to note: 
+- This runs the loop in serial, one iteration after the other, but the different iterations of the loop do not depend on each other. For example, dot += a[1] * b[1]; does not depend on dot += a[2] * b[2];. Therefore, there is an opportunity to execute the elements of the loop in parallel on different processors.
+This code places the entire set of vectors in a single pool of memory in an area called the stack. Memory on the stack must be allocated before the program runs, so the size N of all arrays is fixed when the code compiles.
+
+- Let's imagine that our class is going to divide the work of calculating the elements of this dot product between its members. We are going to give each person a "chunk" of the dot product to calculate so most of the work can be done in parallel, and then one person will be responsible for gathering all the different chunks and adding their results together.
 
 
 ## Step-by-Step: Chunking the Work
@@ -77,32 +110,7 @@ Total dot product:
 global_dot = 22 + 38 + 38 + 22 = 120
 
 
-# Serial C code for dot product. 
 
-The code below is written in C. In this we do the serial dot prodcut. 
-
- 
-
-```c
-#include <stdio.h>           // Include standard input/output header for printf
-
-#define N 1000               // Define a constant N = 1000, size of the arrays
-
-int main() {
-    double a[N], b[N], dot = 0.0;  // Declare arrays a and b of size N, and initialize dot to 0.0
-
-    for (int i = 0; i < N; i++) {  // Loop over each index from 0 to N-1
-        a[i] = i * 0.5;            // Fill array a with values: a[i] = i * 0.5
-        b[i] = i * 2.0;            // Fill array b with values: b[i] = i * 2.0
-        dot += a[i] * b[i];        // Accumulate the product of a[i] and b[i] into dot
-    }
-
-    printf("Dot product: %f\n", dot);  // Print the final dot product result
-
-    return 0;                    // Exit the program successfully
-}
-
-```
 Now we’ll apply the same logic we used when we imagined our class acting as a human parallel processor.
 There’s one more concept we need to introduce: global vs. local indexing in MPI.
 
