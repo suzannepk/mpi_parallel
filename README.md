@@ -14,7 +14,7 @@ This hands-on lesson walks through:
 - Writing a parallel version using `MPI_Scatter` and `MPI_Reduce`
 
 
-# Parallelizing the Dot Product: The Math of Chunking
+# The dot Product
 
 We want to compute the dot product of two vectors `a` and `b` of size `N`:
 
