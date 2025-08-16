@@ -118,13 +118,12 @@ global_dot = 22 + 38 + 38 + 22 = 120
 
 Now we’ll apply the same logic to building a parallel code. But first some information about the Message Passing Interface 
 
-
 MPI is **distributed memory parallelism** meaning we need to trasnfer all or some of the data to the memory assocated with each process. 
 
 We could give each process a full copy of the array again, but it is a much better use of memory and more efficient for data transfer if we distribute only the parts of the array that each process works on to the memory associated with that process.
 
 
- MPI’s job is to distribute the global arrays into local chunks, so each process only stores and works on its own small part.
+ MPI’s job is to distribute the global arrays into local chunks, so each process only stores and works on its own small part to track the interations in that small part, we will setup local indicies for the loops. 
 
 We determine how big each process’s chunk will be by the number of Elements, N, divided by the number of processes:
 
