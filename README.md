@@ -20,11 +20,23 @@ We want to compute the dot product of two vectors `a` and `b` of size `N`:
 
 dot = a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + ... + a[N-1]*b[N-1]
 
+With N=8 and vectors a and b: 
+
+a = [1, 2, 3, 4, 5, 6, 7, 8]
+
+
+b = [8, 7, 6, 5, 4, 3, 2, 1]
+
+
+Total dot product:
+
+  = 1*8 + 2*7 + 3*6 + 4*5 + 5*4 + 6*3 + 7*2 + 8*1
+  = 120
+
 Here is how that can be implemented in serial C code. 
 
-# Serial C code for dot product. 
+# Serial C code for dot product
 
- 
 
 ```c
 #include <stdio.h>           // Include standard input/output header for printf
@@ -48,11 +60,14 @@ int main() {
 ```
 
 Things to note: 
-- This runs the loop in serial, one iteration after the other, but the different iterations of the loop do not depend on each other. For example, dot += a[1] * b[1]; does not depend on dot += a[2] * b[2];. So, there is an opportunity to execute the elements of the loop in parallel on different processors.
+
+- This runs the loop in serial, one iteration after the other, but the values computeed in different iterations of the loop do not depend on each other. So, there is an easy opportunity to execute the elements of the loop in parallel on different processors.
+- 
   - C code allocates memory in two main ways: the stack and the heap. These are not physical locations in memory, but rather two different ways the C compiler and runtime manage memory.
      - Stack: Fast, automatically managed memory for local variables; size must be known at compile time and disappears when the function ends.
-     - Heap: Flexible, manually managed memory for data that can change size or outlive a single function; allocated with malloc/free at runtime.
--This code places the entire set of vectors in a single pool of memory in an area called the stack. Memory on the stack must be allocated before the program runs, so the size N of all arrays is fixed when the code compiles.
+     - Heap: Flexible, manually managed memory for data that can change size or outlive a single function; allocated with functions called malloc/free at runtime.
+     - 
+-This code places the entire set of vectors in a single pool of stack memory. 
 
 # Parallel Thinking
 
@@ -83,25 +98,12 @@ We'll organize our processes into ranks to make it easier for the gatherer to tr
 | Rank 3         | 4–5                | `a[4]*b[4] + a[5]*b[5]`          |
 | Rank 4         | 6–7                | `a[6]*b[6] + a[7]*b[7]`          |
 
-Each process computes its own **local dot product**, and then we combine all the local results:
+Each process has its own part of the data from thet array and computes its own **local dot product**, and then we combine all the local results:
 
 global_dot = local_Rank0 + local_Rank1 + local_Rank2 + local_Rank3
 
 ## Example With Real Values
 
-Let:
-
-
-a = [1, 2, 3, 4, 5, 6, 7, 8]
-
-
-b = [8, 7, 6, 5, 4, 3, 2, 1]
-
-
-Total dot product:
-
-  = 1*8 + 2*7 + 3*6 + 4*5 + 5*4 + 6*3 + 7*2 + 8*1
-  = 120
 
 | Rank | Elements            | Calculation  | Result |
 |------|---------------------|--------------|--------|
@@ -114,11 +116,8 @@ global_dot = 22 + 38 + 38 + 22 = 120
 
 
 
-Now we’ll apply the same logic to building a parallel code. But first some information about the Message Passing Interfave 
+Now we’ll apply the same logic to building a parallel code. But first some information about the Message Passing Interface 
 
-In our earlier examples, we thought of the data as being globally available — meaning every processor could, in theory, access every index in the arrays:
-
-```a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]```
 
 MPI is **distributed memory parallelism** meaning we need to trasnfer all or some of the data to the memory assocated with each process. 
 
