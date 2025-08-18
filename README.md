@@ -257,10 +257,41 @@ int main(int argc, char** argv) {
 }
 
 
-TODO Suzanne add some timers and an batch script Have them time this with N=1,2,10, 100, 10000.
+```
+## Hands-on Dot Product Exercise
 
+A version of this code with execution timers that allows you to set `N` (the number of elements) and `NP` (the number of MPI processes) from a batch script is available here:
 
 ```
+MPI_dot/mpi_dot
+```
+
+For this exercise, you will adjust the code to run with different numbers of processes and observe the speedup.
+
+
+### Steps
+
+1. Change into the directory:
+
+   ```
+   cd mpi_dot/
+   ```
+
+2. Open the batch script with an editor such as `vi`.
+
+3. Follow the instructions in the batch script to run the code with `NP` set to 1, 2, 4, 8, and 16.
+
+4. Record the results and note at what processor count the speedup levels off.
+
+---
+
+### Discussion Questions
+
+- Remember that communication between processes adds overhead to code execution.  
+  - Why might the code not continue to speed up as you add more processes?  
+  - How does the ratio of computation to communication affect the parallel efficiency?
+
+
 # Vector Addition - your turn! 
 
 
