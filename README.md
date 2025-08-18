@@ -14,7 +14,7 @@ This hands-on lesson walks through:
 - Writing a parallel version using `MPI_Scatter` and `MPI_Reduce`
 
 
-# The dot Product
+# The Dot Product
 
 We want to compute the dot product of two vectors `a` and `b` of size `N`:
 
@@ -65,9 +65,10 @@ Things to note:
 - 
   - C code allocates memory in two main ways: the stack and the heap. These are not physical locations in memory, but rather two different ways the C compiler and runtime manage memory.
      - Stack: Fast, automatically managed memory for local variables; size must be known at compile time and disappears when the function ends.
+       - The serial code above places the entire set of vectors in a single pool of stack memory. 
+       - Stack allocations look like this 'double a[N], b[N]' in the program above. 
      - Heap: Flexible, manually managed memory for data that can change size or outlive a single function; allocated with functions called malloc/free at runtime.
-     - 
--This code places the entire set of vectors in a single pool of stack memory. 
+      - We'll use malloc in the parallel version of this code below. 
 
 # Parallel Thinking
 
@@ -122,9 +123,9 @@ MPI is **distributed memory parallelism** meaning we need to trasnfer all or som
 We could give each process a full copy of the array again, but it is a much better use of memory and more efficient for data transfer if we distribute only the parts of the array that each process works on to the memory associated with that process.
 
 
- MPI’s job is to distribute the global arrays into local chunks, so in many cases, each process only stores and works on its own small part in its own pool of memory. To track the interations in that small part, we will setup local indicies for the loops. 
+ MPI’s job is to distribute the global arrays into local chunks, so in many cases, just like the people in our example above, each process only stores and works on its own small part in its own pool of memory. To track the interations in that small part, we will setup local indicies for the loops. 
 
-So for the example we have been following, that means 
+So for the example we have been following, that means we must setup local arrays and indicies for each process. 
 ## Work Division for Dot Product
 
 | Index Range (Global) | Rank | Local Index | Operation (Global Index)  | Operation (Local Index)                             | Calculation  | Result |   
@@ -149,6 +150,9 @@ The first thing MPI does when it is initialized, is set up a communicator, calle
 The part of the code that will be executed in parallel using one MPI communicator is called the MPI Region. It will always be sandwiched between MPI_Init and MPI_Finalize function calls
 
 All MPI function calls within the same MPI region will get each process’s rank from the communicator. The programmer must use logic, based on the MPI rank's ID to differentiate the code paths.
+
+**Suzanne Todo:** Concisely Explain MPI Scatter and MPI Gather
+
 
 Here is he dot poduct code modify to use the most teachable implementation of of MPI. 
 
@@ -235,10 +239,11 @@ Here is the serial code.
 You will need to: 
 
 - Initialize MPI
+- Calculate a chunk size based on N. 
 - Create local a,b and c variables 
-- calculate a chunk size based on N. 
-- scatter chuncks of a and b differnt ranks 
+- scatter chuncks of a and b differnt ranks ( there are also clever ways of solving this with using only index math) To
 
+**Suzanne To Do**: Guide them in to writing the parallel code. Explain that this is only one way to slove the paralleliszation 
 
 ```
 #include <stdio.h>
