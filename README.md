@@ -263,7 +263,7 @@ int main(int argc, char** argv) {
 A version of this code with execution timers that allows you to set `N` (the number of elements) and `NP` (the number of MPI processes) from a batch script is available here:
 
 ```
-MPI_dot/mpi_dot
+mpi_parallel/mpi_dot
 ```
 
 For this exercise, you will adjust the code to run with different numbers of processes and observe the speedup.
