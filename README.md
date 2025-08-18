@@ -179,7 +179,7 @@ The way we will implement the parallel dot product in the code below also uses t
 - **MPI_Gather**: Collects data from all processes and assembles it back into a single dataset on the root process.  
   - Example: Each process computes a partial result, and `MPI_Gather` collects all of them into one array at the root.  
 
-Below is the code. Please read the comments in the code. There are other ways to implement this with MPI, but we have chosen this one to be as close to the parallel thinking example as possible. 
+Below is the code. Please read the comments in the code. There are other ways to implement this with MPI, but we have chosen this one to be as close to the parallel thinking example as possible. You will use this example to help you parallelize a vector addtion code later in the tutorial. 
 
 
 
@@ -257,116 +257,96 @@ int main(int argc, char** argv) {
     return 0;   // Exit the program
 }
 
-```
 
-OK Now it is your turn. We are going to do a vector addtion.
+TODO Suzanne add some timers and an batch script Have them time this with N=1,2,10, 100, 10000.
 
-Here is the serial code. 
 
 ```
-#include <stdio.h>           // Include standard input/output header for printf
+# Vector Addition - your turn! 
 
-#define N 1000               // Define a constant N = 1000, size of the arrays
+
+Now it’s your turn. We are going to perform a vector addition.
+
+With N = 8, let’s define two vectors for a mental example just like we did for the dot product example:
+
+a = [1, 2, 3, 4, 5, 6, 7, 8]
+b = [8, 7, 6, 5, 4, 3, 2, 1]
+
+The result vector c is computed element-wise:
+
+c = a + b = [1+8, 2+7, 3+6, 4+5, 5+4, 6+3, 7+2, 8+1] = [9, 9, 9, 9, 9, 9, 9, 9]
+
+Notice that each element of c is independent of the others, so the computation can be easily divided among multiple processes.
+
+---
+
+## Serial Code
+
+Here is an example of the serial implementation:
+
+```
+#include <stdio.h>
+
+#define N 8
 
 int main() {
-    double a[N], b[N], c[N]; // Declare arrays a, b, and c of size N on the stack
+    double a[N], b[N], c[N];
 
-    for (int i = 0; i < N; i++) {   // Loop over each index from 0 to N-1
-        a[i] = i * 0.5;             // Fill array a with values: a[i] = i * 0.5
-        b[i] = i * 2.0;             // Fill array b with values: b[i] = i * 2.0
-        c[i] = a[i] + b[i];         // Compute element-wise addition: c[i] = a[i] + b[i]
+    for (int i = 0; i < N; i++) {
+        a[i] = i * 0.5;
+        b[i] = i * 2.0;
+        c[i] = a[i] + b[i];
     }
 
-    printf("Vector addition (first 5 results):\n");  
-    for (int i = 0; i < 5; i++) {   // Print just the first 5 results for readability
+    printf("Vector addition (first 5 results):\n");
+    for (int i = 0; i < 5; i++) {
         printf("c[%d] = %f\n", i, c[i]);
     }
 
-    return 0;   // Exit the program successfully
-}
-````
-
-You will need to: 
-
-- Initialize MPI
-- Calculate a chunk size based on N. 
-- Create local a,b and c variables 
-- scatter chuncks of a and b differnt ranks ( there are also clever ways of solving this with using only index math) To
-
-**Suzanne To Do**: Guide them in to writing the parallel code. Explain that this is only one way to slove the paralleliszation 
-
-```
-#include <stdio.h>      // For printf
-#include <stdlib.h>     // For malloc and free
-#include <mpi.h>        // For MPI functions
-
-#define N 10      // Total number of elements in each vector
-
-int main(int argc, char** argv) {
-    int rank, size;                     // rank = ID of the current process, size = total number of processes
-    double *a = NULL, *b = NULL, *c = NULL;  // Full vectors (only meaningful on rank 0)
-
-    // Initialize the MPI environment
-    MPI_Init(&argc, &argv);
-
-    // TODO Setup the MPI Communicator and get the rank and size
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-    // TODO Calculate how many elements each process should handle
-    int chunk = N / size;
-
-    // Allocate local arrays for this process
-    double *a_local = malloc(chunk * sizeof(double));
-    double *b_local = malloc(chunk * sizeof(double));
-    double *c_local = malloc(chunk * sizeof(double));
-
-    // Only rank 0 initializes the full vectors
-    if (rank == 0) {
-        a = malloc(N * sizeof(double));
-        b = malloc(N * sizeof(double));
-        c = malloc(N * sizeof(double));   // Allocate memory for the result vector
-        for (int i = 0; i < N; i++) {
-            a[i] = i * 0.5;
-            b[i] = i * 2.0;
-        }
-    }
-
-    // Scatter chunks of a and b to all processes
-    MPI_Scatter(a, chunk, MPI_DOUBLE, a_local, chunk, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatter(b, chunk, MPI_DOUBLE, b_local, chunk, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-    // TODO Each process computes its local vector addition This will use c_local,a_local and b_local. 
-    for (int i = 0; i < chunk; i++) {
-        c_local[i] = a_local[i] + b_local[i];
-    }
-
-    // TODO Gather all chunks of c back to root
-    MPI_Gather(c_local, chunk, MPI_DOUBLE, c, chunk, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-    // Rank 0 prints the first few results
-    if (rank == 0) {
-        printf("Vector addition results (first 10 elements):\n");
-        for (int i = 0; i < 10; i++) {
-            printf("a[%d]=%6.2f, b[%d]=%6.2f, c[%d]=%6.2f\n",
-                   i, a[i], i, b[i], i, c[i]);
-        }
-        free(a);
-        free(b);
-        free(c);
-    }
-
-    // All processes free their local memory
-    free(a_local);
-    free(b_local);
-    free(c_local);
-
-    MPI_Finalize();
-
     return 0;
 }
+
+
+
+
+
+There are a few different ways to make this code parallel with MPI. If you want to solve it in the same way that we showed for the dot product example, you can use the code below. You are welcome to try different methods too.  
+
+Using Scatter and Gather Menthod: 
+
+
+Parallelization Plan with MPI (Scatter and Gather)
+- Initialize MPI.
+- Determine the chunk size for each process: chunk = N / size.
+- Allocate local arrays (a_local, b_local, c_local) on the heap.
+- Scatter chunks of a and b to each process.
+- Each process computes its local vector addition: c_local[i] = a_local[i] + b_local[i].
+- Gather all c_local chunks back to the root process.
+- Print results (rank 0).
+- Free all heap memory.
+- Finalize MPI.
+
+
+Open a terminal and open `MPI_vec_add.c` with an editor like vi and fill in the todos. 
+
+When you are done editing, save the file. Then:
+
+1. Compile the program:
+
+```
+mpicc MPI_vec_add.c -o MPI_vec_add`
+```
+2. Run the program (example with SLURM):
+```
+sbatch submit_MPI_vec_add
 ```
 
+Hint: If you get stuck, the solution is available at
 
+```
+/answers/MPI_vec_add.c
+```
 
+# Final Thoughts
 
+The two examples above are meant to show how MPI can be used to distribute different iterations of a loop across multiple processors. While both examples could easily be handled by a regular computer in serial, they help illustrate the type of parallel thinking required to use MPI. In real modeling and simulation codes, each process typically handles far more work than the simple arithmetic operations we used here.
