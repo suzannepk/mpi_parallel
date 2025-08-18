@@ -277,11 +277,16 @@ For this exercise, you will adjust the code to run with different numbers of pro
    cd mpi_dot/
    ```
 
-2. Open the batch script with an editor such as `vi`.
+2. Open the batch script, `submit.sbatch` with an editor such as `vi`.
 
-3. Follow the instructions in the batch script to run the code with `NP` set to 1, 2, 4, 8, and 16.
+   ```
+   vi submit.sbatch
+   ```
+   
 
-4. Record the results and note at what processor count the speedup levels off.
+4. Follow the instructions in the batch script to run the code with `NP` set to 1, 2, 4, 8, and 16.
+
+5. Record the results and note at what processor count the speedup levels off.
 
 ---
 
