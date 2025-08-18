@@ -10,7 +10,7 @@ You’ll learn how to:
 By the end, you’ll see how MPI lets multiple processes work together using distributed memory parallelism—separate memory pools that communicate by sending messages.
 
 
-# The Dot Product
+## The Dot Product
 
 We want to compute the dot product of two vectors `a` and `b` of size `N`:
 
@@ -31,7 +31,7 @@ Total dot product:
 
 Here is how that can be implemented in serial C code. 
 
-# Serial C code for dot product
+## Serial C code for dot product
 
 
 ```c
@@ -55,13 +55,12 @@ int main() {
 
 ```
 
-## Note on Serial and Parallel Execution  
+### Note on Serial and Parallel Execution  
 
 - The loop above runs in serial, one iteration after the other.  
 - However, the values computed in different iterations of the loop do not depend on each other.  
 - This creates an easy opportunity to execute the iterations of the loop in parallel on different processors.  
 
----
 
 ## Memory Allocation in C  
 
@@ -83,7 +82,7 @@ These are not physical locations in memory, but two different ways the C compile
   - Allocated at runtime using `malloc` and freed with `free`.  
   - We will use `malloc` in the parallel version of this code below.  
 
-# Parallel Thinking
+## Parallel Thinking
 
 - Imagine our class is dividing the work of calculating a dot product.  
 - Each person gets a "chunk" of the dot product to calculate, so most of the work can be done in parallel.  
@@ -113,7 +112,7 @@ Each process computes its own **local dot product**, and then we combine all the
 
 global_dot = local_Rank0 + local_Rank1 + local_Rank2 + local_Rank3
 
-## Example With Real Values
+### Example With Real Values
 
 
 | Rank | Elements            | Calculation  | Result |
@@ -125,7 +124,7 @@ global_dot = local_Rank0 + local_Rank1 + local_Rank2 + local_Rank3
 
 global_dot = 22 + 38 + 38 + 22 = 120
 
-# Thinking About Local and Global Arrays
+## Thinking About Local and Global Arrays
 
 MPI is **distributed-memory parallelism**, which means each process works in its own pool of memory.  
 
@@ -155,7 +154,7 @@ Each process gets its own separate allocation of memory.
 This memory is usually allocated on the heap*(using `malloc`). Heap allocation allows memory size to be determined at run time, so it can adjust automatically to the number of processes and the chunk size assigned to each.  
 
 
-# Initializing MPI  
+## Initializing MPI  
 
 The first thing MPI does when it is initialized is set up a communicator called `MPI_COMM_WORLD`.  
 
@@ -278,7 +277,6 @@ c = a + b = [1+8, 2+7, 3+6, 4+5, 5+4, 6+3, 7+2, 8+1] = [9, 9, 9, 9, 9, 9, 9, 9]
 
 Notice that each element of c is independent of the others, so the computation can be easily divided among multiple processes.
 
----
 
 ## Serial Code
 
@@ -305,10 +303,10 @@ int main() {
 
     return 0;
 }
+```
 
 
-
-
+## Hands-On Series to Parallel
 
 There are a few different ways to make this code parallel with MPI. If you want to solve it in the same way that we showed for the dot product example, you can use the code below. You are welcome to try different methods too.  
 
