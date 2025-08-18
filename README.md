@@ -57,20 +57,20 @@ int main() {
 
 ## Note on Serial and Parallel Execution  
 
-- The loop above runs in **serial**, one iteration after the other.  
-- However, the values computed in different iterations of the loop do **not depend on each other**.  
-- This creates an easy opportunity to execute the iterations of the loop **in parallel on different processors**.  
+- The loop above runs in serial, one iteration after the other.  
+- However, the values computed in different iterations of the loop do not depend on each other.  
+- This creates an easy opportunity to execute the iterations of the loop in parallel on different processors.  
 
 ---
 
 ## Memory Allocation in C  
 
-C code allocates memory in two main ways: the **stack** and the **heap**.  
+C code allocates memory in two main ways: the stack and the heap.  
 These are not physical locations in memory, but two different ways the C compiler and runtime manage memory.  
 
 - **Stack**  
   - Fast, automatically managed memory for local variables.  
-  - Size must be known at **compile time**.  
+  - Size must be known at compile time.  
   - Memory disappears when the function ends.  
   - In the serial code above, the entire set of vectors is placed in a single pool of stack memory.  
   - Example stack allocation:  
@@ -80,26 +80,26 @@ These are not physical locations in memory, but two different ways the C compile
 
 - **Heap**  
   - Flexible, manually managed memory for data that can change size or outlive a single function.  
-  - Allocated at **runtime** using `malloc` and freed with `free`.  
-  - We will use `malloc` in the **parallel version** of this code below.  
+  - Allocated at runtime using `malloc` and freed with `free`.  
+  - We will use `malloc` in the parallel version of this code below.  
 
 # Parallel Thinking
 
 - Imagine our class is dividing the work of calculating a dot product.  
-- Each person gets a **"chunk"** of the dot product to calculate, so most of the work can be done **in parallel**.  
-- One person is then responsible for **gathering all the chunks** and adding the results together.  
+- Each person gets a "chunk" of the dot product to calculate, so most of the work can be done in parallel.  
+- One person is then responsible for gathering all the chunks and adding the results together.  
 
 Let’s say we have:  
 
 - **N = 8** total elements to add  
-- **P = 4** people (we’ll call these people **processes** since it helps with the transition to MPI later)  
+- **P = 4** people (we’ll call these people processes since it helps with the transition to MPI later)  
 
 To split the work evenly:  
 'chunk_size = N / P = 8 / 4 = 2'
 
-Each process will handle **2 elements** of the dot product.  
+Each process will handle 2 elements of the dot product.  
 
-We also organize our processes into **ranks** (process IDs) to make it easier for the gatherer to track them.  
+We also organize our processes into ranks (process IDs) to make it easier for the gatherer to track them.  
 
 | Rank (Process) | Global Index range |       Operation                  |
 |----------------|--------------------|----------------------------------|
@@ -129,10 +129,10 @@ global_dot = 22 + 38 + 38 + 22 = 120
 
 MPI is **distributed-memory parallelism**, which means each process works in its own pool of memory.  
 
-We *could* give every process a full copy of the arrays, but this wastes memory and requires unnecessary data transfers. Instead, MPI distributes **only the needed chunks** of the global arrays to each process.  
+We *could* give every process a full copy of the arrays, but this wastes memory and requires unnecessary data transfers. Instead, MPI distributes only the needed chunks of the global arrays to each process.  
 
 To make this work:  
-- Each process has its own **local arrays** and **local indices**.  
+- Each process has its own local arrays and local indices.  
 - The global indices are mapped to local ones, so each process only handles its part of the data.  
 
 ## Work Division for Dot Product
@@ -148,26 +148,26 @@ To make this work:
 
 ## Memory in Practice
 
-For a typical MPI program, the number of ranks (processes) is set by the programmer in the **run command**, not in the code. This makes it easy to experiment with different numbers of processes without modifying the source.  
+For a typical MPI program, the number of ranks (processes) is set by the programmer in the run command, not in the code. This makes it easy to experiment with different numbers of processes without modifying the source.  
 
 Each process gets its own separate allocation of memory.  
 
-This memory is usually allocated on the **heap** (using `malloc`). Heap allocation allows memory size to be determined at run time, so it can adjust automatically to the number of processes and the chunk size assigned to each.  
+This memory is usually allocated on the heap*(using `malloc`). Heap allocation allows memory size to be determined at run time, so it can adjust automatically to the number of processes and the chunk size assigned to each.  
 
 
 # Initializing MPI  
 
-The first thing MPI does when it is initialized is set up a **communicator** called `MPI_COMM_WORLD`.  
+The first thing MPI does when it is initialized is set up a communicator called `MPI_COMM_WORLD`.  
 
-You can think of a communicator as a **package** that holds all the organizational information for its MPI region in the code. Inside the communicator:  
-- Each process is given a **rank** (its unique ID).  
-- The **size** of the communicator is equal to the total number of ranks.  
+You can think of a communicator as a package that holds all the organizational information for its MPI region in the code. Inside the communicator:  
+- Each process is given a rank (its unique ID).  
+- The size of the communicator is equal to the total number of ranks.  
 
-The part of the code that will be executed in parallel with an MPI communicator is called the **MPI Region**.  
+The part of the code that will be executed in parallel with an MPI communicator is called the MPI Region.  
 It is always sandwiched between calls to `MPI_Init` and `MPI_Finalize`.  
 
 All MPI function calls within the same MPI region get each process’s rank from the communicator.  
-The programmer must use logic based on the **rank ID** to determine which code path each process follows.  
+The programmer must use logic based on the rank ID to determine which code path each process follows.  
 
 
 ## MPI Scatter and Gather 
@@ -179,7 +179,9 @@ The way we will implement the parallel dot product in the code below also uses t
 - **MPI_Gather**: Collects data from all processes and assembles it back into a single dataset on the root process.  
   - Example: Each process computes a partial result, and `MPI_Gather` collects all of them into one array at the root.  
 
-Here is he dot poduct code modify to use the most teachable implementation of of MPI. 
+Below is the code. Please read the comments in the code. There are other ways to implement this with MPI, but we have chosen this one to be as close to the parallel thinking example as possible. 
+
+
 
 ```c
 #include <stdio.h>      // For printf
