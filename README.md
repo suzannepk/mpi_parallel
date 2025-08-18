@@ -263,7 +263,7 @@ int main(int argc, char** argv) {
 A version of this code with execution timers that allows you to set `N` (the number of elements) and `NP` (the number of MPI processes) from a batch script is available here:
 
 ```
-mpi_parallel/mpi_dot
+mpi_parallel/Dot_prodcut 
 ```
 
 For this exercise, you will adjust the code to run with different numbers of processes and observe the speedup.
@@ -274,7 +274,7 @@ For this exercise, you will adjust the code to run with different numbers of pro
 1. Change into the directory:
 
    ```
-   cd mpi_dot/
+   cd Dot_product/
    ```
 
 2. Open the batch script, `submit.sbatch` with an editor such as `vi`.
@@ -370,7 +370,7 @@ When you are done editing, save the file. Then:
 ```
 mpicc MPI_vec_add.c -o MPI_vec_add`
 ```
-2. Run the program (example with SLURM):
+2. Run the program:
 ```
 sbatch submit_MPI_vec_add
 ```
