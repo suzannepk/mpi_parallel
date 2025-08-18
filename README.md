@@ -115,25 +115,16 @@ global_dot = local_Rank0 + local_Rank1 + local_Rank2 + local_Rank3
 global_dot = 22 + 38 + 38 + 22 = 120
 
 
-
-Now we’ll apply the same logic to building a parallel code. But first some information about the Message Passing Interface 
+# Thinking about Local and Global Arrays and Variables
 
 MPI is **distributed memory parallelism** meaning we need to trasnfer all or some of the data to the memory assocated with each process. 
 
 We could give each process a full copy of the array again, but it is a much better use of memory and more efficient for data transfer if we distribute only the parts of the array that each process works on to the memory associated with that process.
 
 
- MPI’s job is to distribute the global arrays into local chunks, so each process only stores and works on its own small part to track the interations in that small part, we will setup local indicies for the loops. 
+ MPI’s job is to distribute the global arrays into local chunks, so in many cases, each process only stores and works on its own small part in its own pool of memory. To track the interations in that small part, we will setup local indicies for the loops. 
 
-We determine how big each process’s chunk will be by the number of Elements, N, divided by the number of processes:
-
-chunk_size = N / P 
-
-In the example we ahave been following this is: 
-
-8 / 4 = 2
-
-So for that example, that means 
+So for the example we have been following, that means 
 ## Work Division for Dot Product
 
 | Index Range (Global) | Rank | Local Index | Operation (Global Index)  | Operation (Local Index)                             | Calculation  | Result |   
@@ -144,9 +135,14 @@ So for that example, that means
 | 6–7                  | 3    | 0, 1        | `a[6]b[6] + a[7]b[7]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 7×2 + 8×1    | 22     |
 
 
-For a typical MPI program, the number of ranks is set by the programmer in the command used to run the program. This allows the programmer to try different numbers of processes per task without needing to change the code.
+For a typical MPI program, the number of ranks (processes) is set by the programmer in the command used to run the program. This makes it easy to experiment with different numbers of processes for a task without changing the source code.
+
+Each process gets its own separate allocation of memory.
+
+This memory is usually allocated on the heap using the malloc function. Allocating on the heap allows the memory size to be determined at run time, so it can adjust automatically based on the chunk of work assigned to each process and the total number of processes chosen.
 
 
+# Initalizing MPI 
 
 The first thing MPI does when it is initialized, is set up a communicator, called `MPI_COMM_WORLD`. You can think of a communicator as a package that holds all the needed organizational information for its MPI region in the code. Inside the communicator each process is given a rank. The size of the communicator is equal to its total number of ranks.
 
@@ -205,7 +201,7 @@ int main(int argc, char** argv) {
                 b_local, chunk, MPI_DOUBLE,
                 0, MPI_COMM_WORLD);
 
-    // Each process computes the dot product of its own chunk local chunck using the local indicies, 
+    // Each process computes the dot product of its own local chunck using the local indicies, 
     for (int i = 0; i < chunk; i++) {
         local_dot += a_local[i] * b_local[i];
     }
@@ -298,7 +294,7 @@ int main() {
 ```
 Let's break down the math to help you code. 
 
-First 
+First . . .  
 
 
 
