@@ -261,6 +261,29 @@ OK Now it is your turn. We are going to do a vector addtion.
 
 Here is the serial code. 
 
+```
+#include <stdio.h>           // Include standard input/output header for printf
+
+#define N 1000               // Define a constant N = 1000, size of the arrays
+
+int main() {
+    double a[N], b[N], c[N]; // Declare arrays a, b, and c of size N on the stack
+
+    for (int i = 0; i < N; i++) {   // Loop over each index from 0 to N-1
+        a[i] = i * 0.5;             // Fill array a with values: a[i] = i * 0.5
+        b[i] = i * 2.0;             // Fill array b with values: b[i] = i * 2.0
+        c[i] = a[i] + b[i];         // Compute element-wise addition: c[i] = a[i] + b[i]
+    }
+
+    printf("Vector addition (first 5 results):\n");  
+    for (int i = 0; i < 5; i++) {   // Print just the first 5 results for readability
+        printf("c[%d] = %f\n", i, c[i]);
+    }
+
+    return 0;   // Exit the program successfully
+}
+````
+
 You will need to: 
 
 - Initialize MPI
@@ -271,12 +294,11 @@ You will need to:
 **Suzanne To Do**: Guide them in to writing the parallel code. Explain that this is only one way to slove the paralleliszation 
 
 ```
-#include <stdio.h>           // Include standard input/output header for printf
 #include <stdio.h>      // For printf
 #include <stdlib.h>     // For malloc and free
 #include <mpi.h>        // For MPI functions
 
-#define N 10000000      // Total number of elements in each vector
+#define N 10      // Total number of elements in each vector
 
 int main(int argc, char** argv) {
     int rank, size;                     // rank = ID of the current process, size = total number of processes
@@ -285,11 +307,11 @@ int main(int argc, char** argv) {
     // Initialize the MPI environment
     MPI_Init(&argc, &argv);
 
-    // Setup the MPI Communicator and get the rank and size
+    // TODO Setup the MPI Communicator and get the rank and size
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    // Calculate how many elements each process should handle
+    // TODO Calculate how many elements each process should handle
     int chunk = N / size;
 
     // Allocate local arrays for this process
@@ -312,12 +334,12 @@ int main(int argc, char** argv) {
     MPI_Scatter(a, chunk, MPI_DOUBLE, a_local, chunk, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Scatter(b, chunk, MPI_DOUBLE, b_local, chunk, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-    // Each process computes its local vector addition
+    // TODO Each process computes its local vector addition This will use c_local,a_local and b_local. 
     for (int i = 0; i < chunk; i++) {
         c_local[i] = a_local[i] + b_local[i];
     }
 
-    // Gather all chunks of c back to root
+    // TODO Gather all chunks of c back to root
     MPI_Gather(c_local, chunk, MPI_DOUBLE, c, chunk, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     // Rank 0 prints the first few results
