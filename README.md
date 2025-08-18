@@ -1,17 +1,13 @@
 # Introduction to MPI and Parallel Computing
 
-This repo teaches parallel thinking and introduces MPI in a 40-minute hands-on lesson.
+This 40-minute hands-on lesson introduces parallel thinking and the Message Passing Interface (MPI), a key tool in High Performance Computing (HPC).
 
-The Message Passing Interface (MPI) is widely used in High Performance Computing (HPC) to distribute work across multiple processors. It enables users to take advantage of **distributed memory parallelism** — that is, using separate pools of memory on different nodes by sending messages between them.
+You’ll learn how to:
+- Break down a simple problem (the dot product) into parts that can run in parallel
+- Write a serial version in C
+- Turn it into a parallel version using MPI_Scatter and MPI_Reduce
 
-In this model, the programmer is responsible for dividing the work and must plan how to use the libraries and tools provided by MPI to achieve their goal.
-
-Because parallel thinking is essential before writing MPI code, we will start with the **mathematics of the dot product** and show how this simple operation can be easily divided and performed in parallel across multiple processes.
-
-This hands-on lesson walks through:
-- Understanding how to split up the dot product across multiple workers (before introducing MPI)
-- Writing a basic serial version of the dot product
-- Writing a parallel version using `MPI_Scatter` and `MPI_Reduce`
+By the end, you’ll see how MPI lets multiple processes work together using distributed memory parallelism—separate memory pools that communicate by sending messages.
 
 
 # The Dot Product
@@ -59,36 +55,54 @@ int main() {
 
 ```
 
-Things to note: 
+## Note on Serial and Parallel Execution  
 
-- This runs the loop in serial, one iteration after the other, but the values computeed in different iterations of the loop do not depend on each other. So, there is an easy opportunity to execute the elements of the loop in parallel on different processors.
-- 
-  - C code allocates memory in two main ways: the stack and the heap. These are not physical locations in memory, but rather two different ways the C compiler and runtime manage memory.
-     - Stack: Fast, automatically managed memory for local variables; size must be known at compile time and disappears when the function ends.
-       - The serial code above places the entire set of vectors in a single pool of stack memory. 
-       - Stack allocations look like this 'double a[N], b[N]' in the program above. 
-     - Heap: Flexible, manually managed memory for data that can change size or outlive a single function; allocated with functions called malloc/free at runtime.
-      - We'll use malloc in the parallel version of this code below. 
+- The loop above runs in **serial**, one iteration after the other.  
+- However, the values computed in different iterations of the loop do **not depend on each other**.  
+- This creates an easy opportunity to execute the iterations of the loop **in parallel on different processors**.  
+
+---
+
+## Memory Allocation in C  
+
+C code allocates memory in two main ways: the **stack** and the **heap**.  
+These are not physical locations in memory, but two different ways the C compiler and runtime manage memory.  
+
+- **Stack**  
+  - Fast, automatically managed memory for local variables.  
+  - Size must be known at **compile time**.  
+  - Memory disappears when the function ends.  
+  - In the serial code above, the entire set of vectors is placed in a single pool of stack memory.  
+  - Example stack allocation:  
+    ```c
+    double a[N], b[N];
+    ```
+
+- **Heap**  
+  - Flexible, manually managed memory for data that can change size or outlive a single function.  
+  - Allocated at **runtime** using `malloc` and freed with `free`.  
+  - We will use `malloc` in the **parallel version** of this code below.  
 
 # Parallel Thinking
 
-- Let's imagine that our class is going to divide the work of calculating the elements of this dot product between its members. We are going to give each person a "chunk" of the dot product to calculate so most of the work can be done in parallel, and then one person will be responsible for gathering all the different chunks and adding their results together.
+- Imagine our class is dividing the work of calculating a dot product.  
+- Each person gets a **"chunk"** of the dot product to calculate, so most of the work can be done **in parallel**.  
+- One person is then responsible for **gathering all the chunks** and adding the results together.  
 
+'chunk_size = N / P = 8 / 4 = 2'
 
 ## Step-by-Step: Chunking the Work
 
-Let’s say we have:
+Let’s say we have:  
 
-- N = 8 total elements to add  
-- P = 4 people (lets call these people "processes" because it will help making the transtion to MPI later )
+- **N = 8** total elements to add  
+- **P = 4** people (we’ll call these people **processes** since it helps with the transition to MPI later)  
 
-To split the work evenly:
+To split the work evenly:  
 
-chunk_size = N / P = 8 / 4 = 2
+Each process will handle **2 elements** of the dot product.  
 
-Each process will have two elements to calculate. 
-
-We'll organize our processes into ranks to make it easier for the gatherer to track them
+We also organize our processes into **ranks** (process IDs) to make it easier for the gatherer to track them.  
 
 ## Work Division
 
@@ -99,7 +113,8 @@ We'll organize our processes into ranks to make it easier for the gatherer to tr
 | Rank 3         | 4–5                | `a[4]*b[4] + a[5]*b[5]`          |
 | Rank 4         | 6–7                | `a[6]*b[6] + a[7]*b[7]`          |
 
-Each process has its own part of the data from thet array and computes its own **local dot product**, and then we combine all the local results:
+Each process computes its own **local dot product**, and then we combine all the local results into a single global value:
+
 
 global_dot = local_Rank0 + local_Rank1 + local_Rank2 + local_Rank3
 
@@ -115,17 +130,18 @@ global_dot = local_Rank0 + local_Rank1 + local_Rank2 + local_Rank3
 
 global_dot = 22 + 38 + 38 + 22 = 120
 
+# Thinking About Local and Global Arrays
 
-# Thinking about Local and Global Arrays and Variables
+MPI is **distributed-memory parallelism**, which means each process works in its own pool of memory.  
 
-MPI is **distributed memory parallelism** meaning we need to trasnfer all or some of the data to the memory assocated with each process. 
+We *could* give every process a full copy of the arrays, but this wastes memory and requires unnecessary data transfers. Instead, MPI distributes **only the needed chunks** of the global arrays to each process.  
 
-We could give each process a full copy of the array again, but it is a much better use of memory and more efficient for data transfer if we distribute only the parts of the array that each process works on to the memory associated with that process.
+To make this work:  
+- Each process has its own **local arrays** and **local indices**.  
+- The global indices are mapped to local ones, so each process only handles its part of the data.  
 
+---
 
- MPI’s job is to distribute the global arrays into local chunks, so in many cases, just like the people in our example above, each process only stores and works on its own small part in its own pool of memory. To track the interations in that small part, we will setup local indicies for the loops. 
-
-So for the example we have been following, that means we must setup local arrays and indicies for each process. 
 ## Work Division for Dot Product
 
 | Index Range (Global) | Rank | Local Index | Operation (Global Index)  | Operation (Local Index)                             | Calculation  | Result |   
@@ -135,24 +151,40 @@ So for the example we have been following, that means we must setup local arrays
 | 4–5                  | 2    | 0, 1        | `a[4]b[4] + a[5]b[5]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 5×4 + 6×3    | 38     |
 | 6–7                  | 3    | 0, 1        | `a[6]b[6] + a[7]b[7]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 7×2 + 8×1    | 22     |
 
+---
 
-For a typical MPI program, the number of ranks (processes) is set by the programmer in the command used to run the program. This makes it easy to experiment with different numbers of processes for a task without changing the source code.
+## Memory in Practice
 
-Each process gets its own separate allocation of memory.
+For a typical MPI program, the number of ranks (processes) is set by the programmer in the **run command**, not in the code. This makes it easy to experiment with different numbers of processes without modifying the source.  
 
-This memory is usually allocated on the heap using the malloc function. Allocating on the heap allows the memory size to be determined at run time, so it can adjust automatically based on the chunk of work assigned to each process and the total number of processes chosen.
+Each process gets its own separate allocation of memory.  
+
+This memory is usually allocated on the **heap** (using `malloc`). Heap allocation allows memory size to be determined at run time, so it can adjust automatically to the number of processes and the chunk size assigned to each.  
 
 
-# Initalizing MPI 
+# Initializing MPI  
 
-The first thing MPI does when it is initialized, is set up a communicator, called `MPI_COMM_WORLD`. You can think of a communicator as a package that holds all the needed organizational information for its MPI region in the code. Inside the communicator each process is given a rank. The size of the communicator is equal to its total number of ranks.
+The first thing MPI does when it is initialized is set up a **communicator** called `MPI_COMM_WORLD`.  
 
-The part of the code that will be executed in parallel using one MPI communicator is called the MPI Region. It will always be sandwiched between MPI_Init and MPI_Finalize function calls
+You can think of a communicator as a **package** that holds all the organizational information for its MPI region in the code. Inside the communicator:  
+- Each process is given a **rank** (its unique ID).  
+- The **size** of the communicator is equal to the total number of ranks.  
 
-All MPI function calls within the same MPI region will get each process’s rank from the communicator. The programmer must use logic, based on the MPI rank's ID to differentiate the code paths.
+The part of the code that will be executed in parallel with an MPI communicator is called the **MPI Region**.  
+It is always sandwiched between calls to `MPI_Init` and `MPI_Finalize`.  
 
-**Suzanne Todo:** Concisely Explain MPI Scatter and MPI Gather
+All MPI function calls within the same MPI region get each process’s rank from the communicator.  
+The programmer must use logic based on the **rank ID** to determine which code path each process follows.  
 
+
+## MPI Scatter and Gather 
+The way we will implement the parallel dot product in the code below also uses two more MPI fuctions: MPI_Sactter and MPI_Gather.  
+
+- **MPI_Scatter**: Splits a large dataset into smaller chunks and sends one chunk to each process.  
+  - Example: If you have 8 elements and 4 processes, each process gets 2 elements.  
+
+- **MPI_Gather**: Collects data from all processes and assembles it back into a single dataset on the root process.  
+  - Example: Each process computes a partial result, and `MPI_Gather` collects all of them into one array at the root.  
 
 Here is he dot poduct code modify to use the most teachable implementation of of MPI. 
 
@@ -246,56 +278,26 @@ You will need to:
 **Suzanne To Do**: Guide them in to writing the parallel code. Explain that this is only one way to slove the paralleliszation 
 
 ```
-#include <stdio.h>
-#include <stdlib.h>
+#include <stdio.h>           // Include standard input/output header for printf
 
-#define N 10
+#define N 1000               // Define a constant N = 1000, size of the arrays
 
 int main() {
-    // Allocate arrays
-    double *a = malloc(N * sizeof(double));
-    double *b = malloc(N * sizeof(double));
-    double *c = NULL; // Will hold the gathered result on rank 0
+    double a[N], b[N], c[N]; // Declare arrays a, b, and c of size N on the stack
 
-    // Initialize a and b
-    for (int i = 0; i < N; i++) {
-        a[i] = i * 0.5;
-        b[i] = i * 2.0;
+    for (int i = 0; i < N; i++) {   // Loop over each index from 0 to N-1
+        a[i] = i * 0.5;             // Fill array a with values: a[i] = i * 0.5
+        b[i] = i * 2.0;             // Fill array b with values: b[i] = i * 2.0
+        c[i] = a[i] + b[i];         // Compute element-wise addition: c[i] = a[i] + b[i]
     }
 
-    // Print arrays A and B
-    printf("Serial Array A: ");
-    for (int i = 0; i < N; i++) {
-        printf("%f ", a[i]);
-    }
-    printf("\n");
-
-    printf("Serial Array B: ");
-    for (int i = 0; i < N; i++) {
-        printf("%f ", b[i]);
-    }
-    printf("\n");
-
-    // Compute C
-    for (int i = 0; i < N; i++) {
-        c[i] = a[i] + b[i];
+    printf("Vector addition (first 5 results):\n");  
+    for (int i = 0; i < 5; i++) {   // Print just the first 5 results for readability
+        printf("c[%d] = %f\n", i, c[i]);
     }
 
-    // Print C
-    printf("Array C: ");
-    for (int i = 0; i < N; i++) {
-        printf("%f ", c[i]);
-    }
-    printf("\n");
-
-    // Free memory
-    free(a);
-    free(b);
-    free(c);
-
-    return 0;
+    return 0;   // Exit the program successfully
 }
-
 ```
 Let's break down the math to help you code. 
 
@@ -309,78 +311,65 @@ First . . .
 #include <stdlib.h>
 #include <mpi.h>
 
-#define N 10
+#define N 1000   // Size of the arrays
 
 int main(int argc, char** argv) {
     int rank, size;
-    MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    double *a = NULL, *b = NULL, *c = NULL;     // Global arrays (only meaningful on root)
+    double *local_a, *local_b, *local_c;       // Local chunks (heap allocated)
+    int chunk;
 
+    MPI_Init(&argc, &argv);                    // Initialize MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);      // Get process rank
+    MPI_Comm_size(MPI_COMM_WORLD, &size);      // Get total number of processes
 
-    int chunk = N / size;   // Number of elements per process
-    int start = rank * chunk;
+    chunk = N / size;   // Divide work evenly (assume N % size == 0)
 
-    // Allocate local arrays
-    double *a_local = malloc(chunk * sizeof(double));
-    double *b_local = malloc(chunk * sizeof(double));
-    double *c_local = malloc(chunk * sizeof(double));
+    // Root allocates and initializes global arrays
+    if (rank == 0) {
+        a = (double*) malloc(N * sizeof(double));
+        b = (double*) malloc(N * sizeof(double));
+        c = (double*) malloc(N * sizeof(double));
+        for (int i = 0; i < N; i++) {
+            a[i] = i * 0.5;
+            b[i] = i * 2.0;
+        }
+    }
 
-    // Initialize only the chunk this rank is responsible for
+    // Allocate local arrays on the heap
+    local_a = (double*) malloc(chunk * sizeof(double));
+    local_b = (double*) malloc(chunk * sizeof(double));
+    local_c = (double*) malloc(chunk * sizeof(double));
+
+    // Scatter chunks of a and b to all processes
+    MPI_Scatter(a, chunk, MPI_DOUBLE, local_a, chunk, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatter(b, chunk, MPI_DOUBLE, local_b, chunk, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    // Each process computes its local addition
     for (int i = 0; i < chunk; i++) {
-        a_local[i] = (start + i) * 0.5;  // Same formula as before
-        b_local[i] = (start + i) * 2.0;
-        c_local[i] = a_local[i] + b_local[i];
+        local_c[i] = local_a[i] + local_b[i];
     }
 
-    // Allocate full arrays only on rank 0
-    double *a = NULL, *b = NULL, *c = NULL;
+    // Gather all chunks of c back to root
+    MPI_Gather(local_c, chunk, MPI_DOUBLE, c, chunk, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    // Root prints results
     if (rank == 0) {
-        a = malloc(N * sizeof(double));
-        b = malloc(N * sizeof(double));
-        c = malloc(N * sizeof(double));
+        printf("Vector addition results:\n");
+        for (int i = 0; i < N; i++) {
+            printf("a[%d] = %6.2f, b[%d] = %6.2f, c[%d] = %6.2f\n",
+                   i, a[i], i, b[i], i, c[i]);
+        }
+        free(a); free(b); free(c);
     }
 
-    // Gather all local chunks to rank 0
-    MPI_Gather(a_local, chunk, MPI_DOUBLE, a, chunk, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gather(b_local, chunk, MPI_DOUBLE, b, chunk, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gather(c_local, chunk, MPI_DOUBLE, c, chunk, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    free(local_a); free(local_b); free(local_c);
 
-    // Print all elements on rank 0
-    if (rank == 0) {
-        printf("Array A: ");
-        for (int i = 0; i < N; i++) {
-            printf("%f ", a[i]);
-        }
-        printf("\n");
-
-        printf("Array B: ");
-        for (int i = 0; i < N; i++) {
-            printf("%f ", b[i]);
-        }
-        printf("\n");
-
-        printf("Array C: ");
-        for (int i = 0; i < N; i++) {
-            printf("%f ", c[i]);
-        }
-        printf("\n");
-
-        free(a);
-        free(b);
-        free(c);
-    }
-
-    free(a_local);
-    free(b_local);
-    free(c_local);
-
-    MPI_Finalize();
+    MPI_Finalize();  // Finalize MPI
     return 0;
 }
-
 ```
 
 
 
-**
+
