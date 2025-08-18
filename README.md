@@ -74,9 +74,9 @@ These are not physical locations in memory, but two different ways the C compile
   - Memory disappears when the function ends.  
   - In the serial code above, the entire set of vectors is placed in a single pool of stack memory.  
   - Example stack allocation:  
-    ```c
-    double a[N], b[N];
-    ```
+   
+    `double a[N], b[N];`
+    
 
 - **Heap**  
   - Flexible, manually managed memory for data that can change size or outlive a single function.  
@@ -89,22 +89,17 @@ These are not physical locations in memory, but two different ways the C compile
 - Each person gets a **"chunk"** of the dot product to calculate, so most of the work can be done **in parallel**.  
 - One person is then responsible for **gathering all the chunks** and adding the results together.  
 
-'chunk_size = N / P = 8 / 4 = 2'
-
-## Step-by-Step: Chunking the Work
-
 Let’s say we have:  
 
 - **N = 8** total elements to add  
 - **P = 4** people (we’ll call these people **processes** since it helps with the transition to MPI later)  
 
 To split the work evenly:  
+'chunk_size = N / P = 8 / 4 = 2'
 
 Each process will handle **2 elements** of the dot product.  
 
 We also organize our processes into **ranks** (process IDs) to make it easier for the gatherer to track them.  
-
-## Work Division
 
 | Rank (Process) | Global Index range |       Operation                  |
 |----------------|--------------------|----------------------------------|
@@ -139,8 +134,6 @@ We *could* give every process a full copy of the arrays, but this wastes memory 
 To make this work:  
 - Each process has its own **local arrays** and **local indices**.  
 - The global indices are mapped to local ones, so each process only handles its part of the data.  
-
----
 
 ## Work Division for Dot Product
 
@@ -279,93 +272,73 @@ You will need to:
 
 ```
 #include <stdio.h>           // Include standard input/output header for printf
+#include <stdio.h>      // For printf
+#include <stdlib.h>     // For malloc and free
+#include <mpi.h>        // For MPI functions
 
-#define N 1000               // Define a constant N = 1000, size of the arrays
-
-int main() {
-    double a[N], b[N], c[N]; // Declare arrays a, b, and c of size N on the stack
-
-    for (int i = 0; i < N; i++) {   // Loop over each index from 0 to N-1
-        a[i] = i * 0.5;             // Fill array a with values: a[i] = i * 0.5
-        b[i] = i * 2.0;             // Fill array b with values: b[i] = i * 2.0
-        c[i] = a[i] + b[i];         // Compute element-wise addition: c[i] = a[i] + b[i]
-    }
-
-    printf("Vector addition (first 5 results):\n");  
-    for (int i = 0; i < 5; i++) {   // Print just the first 5 results for readability
-        printf("c[%d] = %f\n", i, c[i]);
-    }
-
-    return 0;   // Exit the program successfully
-}
-```
-Let's break down the math to help you code. 
-
-First . . .  
-
-
-
-
-```
-#include <stdio.h>
-#include <stdlib.h>
-#include <mpi.h>
-
-#define N 1000   // Size of the arrays
+#define N 10000000      // Total number of elements in each vector
 
 int main(int argc, char** argv) {
-    int rank, size;
-    double *a = NULL, *b = NULL, *c = NULL;     // Global arrays (only meaningful on root)
-    double *local_a, *local_b, *local_c;       // Local chunks (heap allocated)
-    int chunk;
+    int rank, size;                     // rank = ID of the current process, size = total number of processes
+    double *a = NULL, *b = NULL, *c = NULL;  // Full vectors (only meaningful on rank 0)
 
-    MPI_Init(&argc, &argv);                    // Initialize MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);      // Get process rank
-    MPI_Comm_size(MPI_COMM_WORLD, &size);      // Get total number of processes
+    // Initialize the MPI environment
+    MPI_Init(&argc, &argv);
 
-    chunk = N / size;   // Divide work evenly (assume N % size == 0)
+    // Setup the MPI Communicator and get the rank and size
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    // Root allocates and initializes global arrays
+    // Calculate how many elements each process should handle
+    int chunk = N / size;
+
+    // Allocate local arrays for this process
+    double *a_local = malloc(chunk * sizeof(double));
+    double *b_local = malloc(chunk * sizeof(double));
+    double *c_local = malloc(chunk * sizeof(double));
+
+    // Only rank 0 initializes the full vectors
     if (rank == 0) {
-        a = (double*) malloc(N * sizeof(double));
-        b = (double*) malloc(N * sizeof(double));
-        c = (double*) malloc(N * sizeof(double));
+        a = malloc(N * sizeof(double));
+        b = malloc(N * sizeof(double));
+        c = malloc(N * sizeof(double));   // Allocate memory for the result vector
         for (int i = 0; i < N; i++) {
             a[i] = i * 0.5;
             b[i] = i * 2.0;
         }
     }
 
-    // Allocate local arrays on the heap
-    local_a = (double*) malloc(chunk * sizeof(double));
-    local_b = (double*) malloc(chunk * sizeof(double));
-    local_c = (double*) malloc(chunk * sizeof(double));
-
     // Scatter chunks of a and b to all processes
-    MPI_Scatter(a, chunk, MPI_DOUBLE, local_a, chunk, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatter(b, chunk, MPI_DOUBLE, local_b, chunk, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatter(a, chunk, MPI_DOUBLE, a_local, chunk, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatter(b, chunk, MPI_DOUBLE, b_local, chunk, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-    // Each process computes its local addition
+    // Each process computes its local vector addition
     for (int i = 0; i < chunk; i++) {
-        local_c[i] = local_a[i] + local_b[i];
+        c_local[i] = a_local[i] + b_local[i];
     }
 
     // Gather all chunks of c back to root
-    MPI_Gather(local_c, chunk, MPI_DOUBLE, c, chunk, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gather(c_local, chunk, MPI_DOUBLE, c, chunk, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-    // Root prints results
+    // Rank 0 prints the first few results
     if (rank == 0) {
-        printf("Vector addition results:\n");
-        for (int i = 0; i < N; i++) {
-            printf("a[%d] = %6.2f, b[%d] = %6.2f, c[%d] = %6.2f\n",
+        printf("Vector addition results (first 10 elements):\n");
+        for (int i = 0; i < 10; i++) {
+            printf("a[%d]=%6.2f, b[%d]=%6.2f, c[%d]=%6.2f\n",
                    i, a[i], i, b[i], i, c[i]);
         }
-        free(a); free(b); free(c);
+        free(a);
+        free(b);
+        free(c);
     }
 
-    free(local_a); free(local_b); free(local_c);
+    // All processes free their local memory
+    free(a_local);
+    free(b_local);
+    free(c_local);
 
-    MPI_Finalize();  // Finalize MPI
+    MPI_Finalize();
+
     return 0;
 }
 ```
