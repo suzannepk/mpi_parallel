@@ -117,7 +117,7 @@ global_dot = local_Rank0 + local_Rank1 + local_Rank2 + local_Rank3
 
 | Rank | Elements            | Calculation  | Result |
 |------|---------------------|--------------|--------|
-| 1    | a[0]b[0] + a[1]b[0] | 1×8 + 2×7    | 22     |
+| 1    | a[0]b[0] + a[1]b[1] | 1×8 + 2×7    | 22     |
 | 2    | a[2]b[2] + a[3]b[3] | 3×6 + 4×5    | 38     |
 | 3    | a[4]b[4] + a[5]b[5] | 5×4 + 6×3    | 38     |
 | 4    | a[6]b[6] + a[7]b[7] | 7×2 + 8×1    | 22     |
@@ -170,13 +170,12 @@ The programmer must use logic based on the rank ID to determine which code path 
 
 
 ## MPI Scatter and Gather 
-The way we will implement the parallel dot product in the code below also uses two more MPI fuctions: MPI_Sactter and MPI_Gather.  
+The way we will implement the parallel dot product in the code below also uses two more MPI fuctions: MPI_Sactter and MPI_Reduce.  
 
 - **MPI_Scatter**: Splits a large dataset into smaller chunks and sends one chunk to each process.  
   - Example: If you have 8 elements and 4 processes, each process gets 2 elements.  
 
-- **MPI_Gather**: Collects data from all processes and assembles it back into a single dataset on the root process.  
-  - Example: Each process computes a partial result, and `MPI_Gather` collects all of them into one array at the root.  
+- **MPI_Reduce**: A collective MPI operation that combines (reduces) values from all processes in a communicator using an operation (such as sum, max, min, etc.) and delivers the single result only to the root process.  
 
 Below is the code. Please read the comments in the code. There are other ways to implement this with MPI, but we have chosen this one to be as close to the parallel thinking example as possible. You will use this example to help you parallelize a vector addtion code later in the tutorial. 
 
