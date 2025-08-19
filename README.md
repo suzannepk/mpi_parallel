@@ -124,35 +124,10 @@ global_dot = local_Rank0 + local_Rank1 + local_Rank2 + local_Rank3
 
 global_dot = 22 + 38 + 38 + 22 = 120
 
-## Thinking About Local and Global Arrays
 
-MPI is **distributed-memory parallelism**, which means each process works in its own pool of memory.  
-
-We *could* give every process a full copy of the arrays, but this wastes memory and requires unnecessary data transfers. Instead, MPI distributes only the needed chunks of the global arrays to each process.  
-
-To make this work:  
-- Each process has its own local arrays and local indices.  
-- The global indices are mapped to local ones, so each process only handles its part of the data.  
-
-## Work Division for Dot Product
-
-| Index Range (Global) | Rank | Local Index | Operation (Global Index)  | Operation (Local Index)                             | Calculation  | Result |   
-|----------------------|------|-------------|---------------------------|-----------------------------------------------------|--------------|--------|
-| 0–1                  | 0    | 0, 1        | `a[0]b[0] + a[1]b[1]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 1×8 + 2×7    | 22     |
-| 2–3                  | 1    | 0, 1        | `a[2]b[2] + a[3]b[3]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 3×6 + 4×5    | 38     |
-| 4–5                  | 2    | 0, 1        | `a[4]b[4] + a[5]b[5]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 5×4 + 6×3    | 38     |
-| 6–7                  | 3    | 0, 1        | `a[6]b[6] + a[7]b[7]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 7×2 + 8×1    | 22     |
-
----
-
-## Memory in Practice
-
-For a typical MPI program, the number of ranks (processes) is set by the programmer in the run command, not in the code. This makes it easy to experiment with different numbers of processes without modifying the source.  
-
-Each process gets its own separate allocation of memory.  
-
-This memory is usually allocated on the heap*(using `malloc`). Heap allocation allows memory size to be determined at run time, so it can adjust automatically to the number of processes and the chunk size assigned to each.  
-
+## The Parallel Dot Prodcut code
+The next sections will walk you through the MPI functions and code that we have used to implement the dot product in parallel.
+The code is given at the end of the explaination. 
 
 ## Initializing MPI  
 
@@ -177,8 +152,31 @@ The way we will implement the parallel dot product in the code below also uses t
 
 - **MPI_Reduce**: A collective MPI operation that combines (reduces) values from all processes in a communicator using an operation (such as sum, max, min, etc.) and delivers the single result only to the root process.  
 
-Below is the code. Please read the comments in the code. There are other ways to implement this with MPI, but we have chosen this one to be as close to the parallel thinking example as possible. You will use this example to help you parallelize a vector addtion code later in the tutorial. 
+## Distributed Memory in Practice
 
+For a typical MPI program, the number of ranks (processes) is set by the programmer in the run command, not in the code. This makes it easy to experiment with different numbers of processes without modifying the source.  
+
+MPI is **distributed-memory parallelism**, which means MPI allows each process to work in its own pool of memory.  
+
+This memory is usually allocated on the heap (using `malloc`). Heap allocation allows memory size to be determined at run time, so it can adjust automatically to the number of processes and the chunk size assigned to each.  
+
+We *could* give every process a full copy of the arrays, but this wastes memory and requires unnecessary data transfers. Instead, MPI distributes only the needed chunks of the global arrays to each process.  
+
+To make this work:  
+- Each process has its own local arrays and local indices.  
+- The global indices are mapped to local ones, so each process only handles its part of the data.  
+
+## Work Division for Dot Product
+
+| Index Range (Global) | Rank | Local Index | Operation (Global Index)  | Operation (Local Index)                             | Calculation  | Result |   
+|----------------------|------|-------------|---------------------------|-----------------------------------------------------|--------------|--------|
+| 0–1                  | 0    | 0, 1        | `a[0]b[0] + a[1]b[1]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 1×8 + 2×7    | 22     |
+| 2–3                  | 1    | 0, 1        | `a[2]b[2] + a[3]b[3]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 3×6 + 4×5    | 38     |
+| 4–5                  | 2    | 0, 1        | `a[4]b[4] + a[5]b[5]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 5×4 + 6×3    | 38     |
+| 6–7                  | 3    | 0, 1        | `a[6]b[6] + a[7]b[7]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 7×2 + 8×1    | 22     |
+
+
+Below is the code. Please read the comments in the code. There are other ways to implement this with MPI, but we have chosen this one to be as close to the parallel thinking example as possible. You will use this example to help you parallelize a vector addtion code later in the tutorial. 
 
 
 ```c
@@ -339,7 +337,6 @@ int main() {
     return 0;
 }
 ```
-
 
 ## Hands-On Series to Parallel
 
