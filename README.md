@@ -117,12 +117,50 @@ global_dot = local_Rank0 + local_Rank1 + local_Rank2 + local_Rank3
 
 | Rank | Elements            | Calculation  | Result |
 |------|---------------------|--------------|--------|
-| 1    | a[0]b[0] + a[1]b[0] | 1×8 + 2×7    | 22     |
+| 1    | a[0]b[0] + a[1]b[1] | 1×8 + 2×7    | 22     |
 | 2    | a[2]b[2] + a[3]b[3] | 3×6 + 4×5    | 38     |
 | 3    | a[4]b[4] + a[5]b[5] | 5×4 + 6×3    | 38     |
 | 4    | a[6]b[6] + a[7]b[7] | 7×2 + 8×1    | 22     |
 
 global_dot = 22 + 38 + 38 + 22 = 120
+
+## The Parallel Dot Product. 
+
+For the next several parts we will break down the parllel MPI-based code. 
+
+## Initializing MPI  
+
+The first thing MPI does when it is initialized is set up a communicator called `MPI_COMM_WORLD`.  
+
+You can think of a communicator as a package that holds all the organizational information for its MPI region in the code. Inside the communicator:  
+- Each process is given a rank (its unique ID).  
+- The size of the communicator is equal to the total number of ranks.  
+
+The part of the code that will be executed in parallel with an MPI communicator is called the MPI Region.  
+It is always sandwiched between calls to `MPI_Init` and `MPI_Finalize`.  
+
+All MPI function calls within the same MPI region get each process’s rank from the communicator.  
+The programmer must use logic based on the rank ID to determine which code path each process follows.  
+
+
+The code for that looks like this: 
+
+```
+    // Initialize the MPI environment
+    MPI_Init(&argc, &argv);
+
+    // Setup to the MPI Communicator and get the rank of the current process and the total number of processes
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+```
+.  .  . STUFF TO DO IN PARALLEL
+```
+    // Finalize the MPI environment
+    MPI_Finalize();
+```
+
+
+
 
 ## Thinking About Local and Global Arrays
 
@@ -145,6 +183,27 @@ To make this work:
 
 ---
 
+The code for that looks like this: 
+
+```
+
+    // Distribute parts of vector a from rank 0 to all processes
+    MPI_Scatter(a, chunk, MPI_DOUBLE,    // Send chunk elements from a
+                a_local, chunk, MPI_DOUBLE,  // Receive chunk elements into a_local
+                0, MPI_COMM_WORLD);      // Root is rank 0
+
+    // Distribute parts of vector b similarly
+    MPI_Scatter(b, chunk, MPI_DOUBLE,
+                b_local, chunk, MPI_DOUBLE,
+                0, MPI_COMM_WORLD);
+
+    // Each process computes the dot product of its own local chunck using the local indicies, 
+    for (int i = 0; i < chunk; i++) {
+        local_dot += a_local[i] * b_local[i];
+    }
+```
+
+
 ## Memory in Practice
 
 For a typical MPI program, the number of ranks (processes) is set by the programmer in the run command, not in the code. This makes it easy to experiment with different numbers of processes without modifying the source.  
@@ -155,18 +214,6 @@ This memory is usually allocated on the heap*(using `malloc`). Heap allocation a
 
 
 ## Initializing MPI  
-
-The first thing MPI does when it is initialized is set up a communicator called `MPI_COMM_WORLD`.  
-
-You can think of a communicator as a package that holds all the organizational information for its MPI region in the code. Inside the communicator:  
-- Each process is given a rank (its unique ID).  
-- The size of the communicator is equal to the total number of ranks.  
-
-The part of the code that will be executed in parallel with an MPI communicator is called the MPI Region.  
-It is always sandwiched between calls to `MPI_Init` and `MPI_Finalize`.  
-
-All MPI function calls within the same MPI region get each process’s rank from the communicator.  
-The programmer must use logic based on the rank ID to determine which code path each process follows.  
 
 
 ## MPI Scatter and Gather 
