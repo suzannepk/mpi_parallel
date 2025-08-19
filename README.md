@@ -344,6 +344,15 @@ There are a few different ways to make this code parallel with MPI. If you want 
 
 Using Scatter and Gather Menthod: 
 
+## MPI Scatter and Gather 
+The two MPI fuctions that may be useful for this are MPI_Sactter and MPI_Gather.  
+
+- **MPI_Scatter**: Splits a large dataset into smaller chunks and sends one chunk to each process.  
+  - Example: If you have 8 elements and 4 processes, each process gets 2 elements.  
+
+- **MPI_Gather**: Collects data from all processes and assembles it back into a single dataset on the root process.  
+  - Example: Each process computes a partial result, and `MPI_Gather` collects all of them into one array at the root.  
+
 
 Parallelization Plan with MPI (Scatter and Gather)
 - Initialize MPI.
