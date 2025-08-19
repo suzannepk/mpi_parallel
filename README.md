@@ -169,7 +169,7 @@ All MPI function calls within the same MPI region get each process’s rank from
 The programmer must use logic based on the rank ID to determine which code path each process follows.  
 
 
-## MPI Scatter and Gather 
+## MPI Scatter and Reduce 
 The way we will implement the parallel dot product in the code below also uses two more MPI fuctions: MPI_Sactter and MPI_Reduce.  
 
 - **MPI_Scatter**: Splits a large dataset into smaller chunks and sends one chunk to each process.  
