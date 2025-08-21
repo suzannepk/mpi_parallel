@@ -365,25 +365,33 @@ Parallelization Plan with MPI (Scatter and Gather)
 - Free all heap memory.
 - Finalize MPI.
 
+# Vector Addition Exercise
 
-Open a terminal and open `MPI_vec_add.c` with an editor like vi and fill in the todos. 
+Open a terminal and navigate to the `vector_addition` directory.  
+Open `vec_add.c` in an editor (e.g., `vi`).  
 
-When you are done editing, save the file. Then:
+Replace the sections marked `<TODO>` with the appropriate code.  
+You may use this README and the code in the `Dot_Product` folder as references.  
 
-1. Compile the program:
+When you’re finished editing, save the file and then:
 
-```
-mpicc MPI_vec_add.c -o MPI_vec_add`
-```
-2. Run the program:
-```
-sbatch submit_MPI_vec_add
-```
+---
 
-Hint: If you get stuck, the solution is available at
+## Step 1: Compile the program
 
 ```
-/answers/MPI_vec_add.c
+mpicc vec_add.c 
+```
+
+## Step 2: Run the program
+
+```
+sbatch submit.sbatch
+```
+If you get stuck, you can check the solution at:
+
+```
+vector_addition/answers/vec_add_answers.c
 ```
 
 # Final Thoughts
