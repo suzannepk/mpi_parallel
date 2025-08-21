@@ -274,7 +274,12 @@ For this exercise, you will adjust the code to run with different numbers of pro
    cd Dot_product/
    ```
 
-2. Open the batch script, `submit.sbatch` with an editor such as `vi`.
+2. Compile the program 
+   ```
+   mpicc mpi_dot.c 
+   ```
+   
+3. Open the batch script, `submit.sbatch` with an editor such as `vi`.
 
    ```
    vi submit.sbatch
