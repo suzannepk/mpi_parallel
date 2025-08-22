@@ -16,5 +16,4 @@ Ne=10000000000000  # You can also change this directly here
 
 echo "Running with $NP processes and N=$Ne elements"
 
-srun -n $NP ./a.out $Ne
-~                                   
+srun -n $NP ./a.out $Ne                                  
