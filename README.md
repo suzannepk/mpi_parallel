@@ -270,6 +270,115 @@ The table below shows the changes that we chose to go from series to parallel.
 | `return 0;` | `MPI_Finalize(); return 0;` | Serial just exits. MPI must finalize the environment before exiting. |
 
 
+# Create an HTML file with a table that preserves spacing and indentation using <pre><code> blocks.
+html_content = """<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Serial vs Parallel (MPI) Code Table</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif; margin: 24px; }
+    table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+    th, td { border: 1px solid #ccc; padding: 12px; vertical-align: top; }
+    th { background: #f7f7f7; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    pre { margin: 0; white-space: pre; overflow-x: auto; }
+    ul { margin: 0 0 8px 20px; padding: 0; }
+  </style>
+</head>
+<body>
+  <h1>Serial Code vs Parallel MPI Code</h1>
+  <table>
+    <thead>
+      <tr>
+        <th><strong>Serial Code</strong></th>
+        <th><strong>Parallel MPI Code</strong></th>
+        <th><strong>Explanation</strong></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <pre><code>#define N 1000</code></pre>
+        </td>
+        <td>
+          <pre><code>#define N 10000000</code></pre>
+        </td>
+        <td>Define the problem size. In parallel, we chose N to be much larger, since the work is distributed.</td>
+      </tr>
+      <tr>
+        <td>
+          <pre><code>double a[N], b[N], dot = 0.0;</code></pre>
+        </td>
+        <td>
+          <pre><code>double *a = NULL, *b = NULL;
+double local_dot = 0.0, global_dot = 0.0;</code></pre>
+        </td>
+        <td>The serial code's arrays are allocated on the stack, though we could have allocated them dynamically. For the parallel code, we chose dynamically allocated (heap) arrays so they can scale and be distributed at run time. A global and local dot variable are used.</td>
+      </tr>
+      <tr>
+        <td>
+          <pre><code>for (int i = 0; i &lt; N; i++) {
+    dot += a[i] * b[i];
+}</code></pre>
+        </td>
+        <td>
+          <ul>
+            <li>Rank 0 initializes the full vectors <code>a</code> and <code>b</code> with <code>malloc</code>.</li>
+            <li><code>MPI_Scatter</code> distributes chunks of arrays to all processes (<code>a_local</code>, <code>b_local</code>).</li>
+            <li>Each process computes its portion:</li>
+          </ul>
+          <pre><code>for (int i = 0; i &lt; chunk; i++) {
+    local_dot += a_local[i] * b_local[i];
+}</code></pre>
+        </td>
+        <td>The serial loop does initialization and computation in one loop. In MPI, initialization is centralized on rank 0, then distributed. Each process computes only its slice of the work.</td>
+      </tr>
+      <tr>
+        <td>
+          <pre><code>dot += a[i] * b[i];</code></pre>
+        </td>
+        <td>
+          <pre><code>local_dot += a_local[i] * b_local[i];</code></pre>
+        </td>
+        <td>In parallel, each process keeps a <strong>local partial sum</strong> instead of the global sum.</td>
+      </tr>
+      <tr>
+        <td>
+          <pre><code>printf("Dot product: %f\n", dot);</code></pre>
+        </td>
+        <td>
+          <pre><code>MPI_Reduce(&local_dot, &global_dot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+if (rank == 0)
+    printf("Global dot product: %f\n", global_dot);</code></pre>
+        </td>
+        <td>Instead of directly printing the result, MPI gathers all partial results and reduces them into a single global result on rank 0, which then prints.</td>
+      </tr>
+      <tr>
+        <td>
+          <pre><code>return 0;</code></pre>
+        </td>
+        <td>
+          <pre><code>MPI_Finalize();
+return 0;</code></pre>
+        </td>
+        <td>Serial just exits. MPI must finalize the environment before exiting.</td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>
+"""
+
+path = "/mnt/data/mpi_serial_vs_parallel_table.html"
+with open(path, "w", encoding="utf-8") as f:
+    f.write(html_content)
+
+path
+
+
+
 | **Serial Code**                        | **Parallel MPI Code** | **Explanation** |
 |----------------------------------------|------------------------|-----------------|
 | `#define N 1000`                       | `#define N 10000000` | Define the problem size. In parallel, we chose N to be much larger, since the work is distributed. |
