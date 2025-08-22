@@ -277,7 +277,7 @@ The table below shows the changes that we chose to go from series to parallel.
 A version of this code with execution timers that allows you to set `N` (the number of elements) and `NP` (the number of MPI processes) from a batch script is available here:
 
 ```
-mpi_parallel/Dot_prodcut 
+mpi_parallel/dot_prodcut 
 ```
 
 For this exercise, you will adjust the code to run with different numbers of processes and observe the speedup.
@@ -288,7 +288,7 @@ For this exercise, you will adjust the code to run with different numbers of pro
 1. Change into the directory:
 
    ```
-   cd Dot_product/
+   cd dot_product/
    ```
 
 2. Compile the program 
@@ -304,6 +304,18 @@ For this exercise, you will adjust the code to run with different numbers of pro
    
 
 4. Follow the instructions in the batch script to run the code with `NP` set to 1, 2, 4, 8, and 16.
+
+   Once you edit the script and save it, you can submt the job by doing: 
+
+   ```
+   sbatch submit.sbatch
+   ```
+   When the job is finished you will see files that look like 
+
+   `vec_add<job_number>.out`
+
+   Use `less vec_add<job_number>.out' to see the content of the files and the execution time of program. 
+
 
 5. Record the results and note at what processor count the speedup levels off.
 
