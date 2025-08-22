@@ -125,7 +125,7 @@ global_dot = local_Rank0 + local_Rank1 + local_Rank2 + local_Rank3
 global_dot = 22 + 38 + 38 + 22 = 120
 
 
-## The Parallel Dot Prodcut code
+## The Parallel Dot Product Code
 The next sections will walk you through the MPI functions and code that we have used to implement the dot product in parallel.
 The code is given at the end of the explaination. 
 
