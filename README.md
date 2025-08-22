@@ -314,10 +314,10 @@ For this exercise, you will adjust the code to run with different numbers of pro
 
    `vec_add<job_number>.out`
 
-   Use `less vec_add<job_number>.out' to see the content of the files and the execution time of program. 
+   Use `less vec_add<job_number>.out` to see the content of the files and the execution time of program. 
 
 
-5. Record the results and note at what processor count the speedup levels off.
+5. Record the number of processors and the execution time for each run and note at what processor count the speedup levels off.
 
 ---
 
