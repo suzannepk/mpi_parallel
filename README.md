@@ -257,7 +257,7 @@ int main(int argc, char** argv) {
 ```
 ## Serial to Paralle
 
-The table below shows the changes that we chose to go from series to parallel. 
+The table below shows the changes that we chose to go from serial to parallel. 
 
 
 | **Serial Code** | **Parallel MPI Code** | **Explanation** |
