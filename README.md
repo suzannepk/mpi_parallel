@@ -127,7 +127,7 @@ global_dot = 22 + 38 + 38 + 22 = 120
 
 ## The Parallel Dot Product Code
 The next sections will walk you through the MPI functions and code that we have used to implement the dot product in parallel.
-The code is given at the end of the explaination. 
+The code is given at the end of the explanation. 
 
 ## Initializing MPI  
 
@@ -145,7 +145,7 @@ The programmer must use logic based on the rank ID to determine which code path 
 
 
 ## MPI Scatter and Reduce 
-The way we will implement the parallel dot product in the code below also uses two more MPI fuctions: MPI_Sactter and MPI_Reduce.  
+The way we will implement the parallel dot product in the code below also uses two more MPI function: MPI_Scatter and MPI_Reduce.  
 
 - **MPI_Scatter**: Splits a large dataset into smaller chunks and sends one chunk to each process.  
   - Example: If you have 8 elements and 4 processes, each process gets 2 elements.  
@@ -176,7 +176,7 @@ To make this work:
 | 6–7                  | 3    | 0, 1        | `a[6]b[6] + a[7]b[7]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 7×2 + 8×1    | 22     |
 
 
-Below is the code. Please read the comments in the code. There are other ways to implement this with MPI, but we have chosen this one to be as close to the parallel thinking example as possible. You will use this example to help you parallelize a vector addtion code later in the tutorial. 
+Below is the code. Please read the comments in the code. There are other ways to implement this with MPI, but we have chosen this one to be as close to the parallel thinking example as possible. You will use this example to help you parallelize a vector addition code later in the tutorial. 
 
 
 ```c
@@ -228,7 +228,7 @@ int main(int argc, char** argv) {
                 b_local, chunk, MPI_DOUBLE,
                 0, MPI_COMM_WORLD);
 
-    // Each process computes the dot product of its own local chunck using the local indicies, 
+    // Each process computes the dot product of its own local chunk using the local indices, 
     for (int i = 0; i < chunk; i++) {
         local_dot += a_local[i] * b_local[i];
     }
@@ -255,7 +255,7 @@ int main(int argc, char** argv) {
 
 
 ```
-## Series to Parallel
+## Serial to Paralle
 
 The table below shows the changes that we chose to go from series to parallel. 
 
@@ -263,7 +263,7 @@ The table below shows the changes that we chose to go from series to parallel.
 | **Serial Code** | **Parallel MPI Code** | **Explanation** |
 |-----------------|------------------------|-----------------|
 | `#define N 1000` | `#define N 10000000` | Define the problem size. In parallel, we chose N to be much larger, since the work is distributed. |
-| `double a[N], b[N], dot = 0.0;` | `double *a = NULL, *b = NULL; double local_dot = 0.0, global_dot = 0.0;` | The serial code's arrays are allocated on the stack, though we could have allocated time dynamically. For the paralle code, we chose dynamically allocated (heap) arrays so they can scale and be distributed at run time. A global and local dot variable are used. |
+| `double a[N], b[N], dot = 0.0;` | `double *a = NULL, *b = NULL; double local_dot = 0.0, global_dot = 0.0;` | The serial code's arrays are allocated on the stack, though we could have allocated time dynamically. For the  parallel code, we chose dynamically allocated (heap) arrays so they can scale and be distributed at run time. A global and local dot variable are used. |
 | `for (int i = 0; i < N; i++) {a[i] = . . b[i] = . . . dot+= . . .; }` | - Rank 0 initializes the full vectors `a` and `b` with malloc. <br> - `MPI_Scatter` distributes chunks of arrays to all processes (`a_local`, `b_local`). <br> - Each process computes its portion: `for (int i=0; i<chunk; i++) local_dot += a_local[i] * b_local[i];` | The serial loop does initialization and computation in one loop. In MPI, initialization is centralized on rank 0, then distributed. Each process computes only its slice of the work. |
 | `dot += a[i] * b[i];` (inside loop) | `local_dot += a_local[i] * b_local[i];` | In parallel, each process keeps a **local partial sum** instead of the global sum. |
 | `printf("Dot product: %f\n", dot);` | `MPI_Reduce(&local_dot, &global_dot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); if (rank==0) printf("Global dot product: %f\n", global_dot);` | Instead of directly printing the result, MPI gathers all partial results and reduces them into a single global result on rank 0, which then prints. |
@@ -277,7 +277,7 @@ The table below shows the changes that we chose to go from series to parallel.
 A version of this code with execution timers that allows you to set `N` (the number of elements) and `NP` (the number of MPI processes) from a batch script is available here:
 
 ```
-mpi_parallel/dot_prodcut 
+mpi_parallel/dot_product 
 ```
 
 For this exercise, you will adjust the code to run with different numbers of processes and observe the speedup.
@@ -305,7 +305,7 @@ For this exercise, you will adjust the code to run with different numbers of pro
 
 4. Follow the instructions in the batch script to run the code with `NP` set to 1, 2, 4, 8, and 16.
 
-   Once you edit the script and save it, you can submt the job by doing: 
+   Once you edit the script and save it, you can submit the job by doing: 
 
    ```
    sbatch submit.sbatch
@@ -376,10 +376,10 @@ int main() {
 
 There are a few different ways to make this code parallel with MPI. If you want to solve it in the same way that we showed for the dot product example, you can use the code below. You are welcome to try different methods too.  
 
-Using Scatter and Gather Menthod: 
+Using Scatter and Gather Method 
 
 ## MPI Scatter and Gather 
-The two MPI fuctions that may be useful for this are MPI_Sactter and MPI_Gather.  
+The two MPI functions that may be useful for this are MPI_Scatter and MPI_Gather.  
 
 - **MPI_Scatter**: Splits a large dataset into smaller chunks and sends one chunk to each process.  
   - Example: If you have 8 elements and 4 processes, each process gets 2 elements.  
