@@ -31,7 +31,7 @@ Total dot product:
 
 Here is how that can be implemented in serial C code. 
 
-## Serial C code for dot product
+## Serial C Code for Dot Product
 
 
 ```c
@@ -145,7 +145,7 @@ The programmer must use logic based on the rank ID to determine which code path 
 
 
 ## MPI Scatter and Reduce 
-The way we will implement the parallel dot product in the code below also uses two more MPI function: MPI_Scatter and MPI_Reduce.  
+The way we will implement the parallel dot product in the code below also uses two more MPI functions: MPI_Scatter and MPI_Reduce.  
 
 - **MPI_Scatter**: Splits a large dataset into smaller chunks and sends one chunk to each process.  
   - Example: If you have 8 elements and 4 processes, each process gets 2 elements.  
@@ -195,7 +195,7 @@ int main(int argc, char** argv) {
     // Initialize the MPI environment
     MPI_Init(&argc, &argv);
 
-    // Setup to the MPI Communicator and get the rank of the current process and the total number of processes
+    // Set up to the MPI Communicator and get the rank of the current process and the total number of processes
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -255,7 +255,7 @@ int main(int argc, char** argv) {
 
 
 ```
-## Serial to Paralle
+## Serial to Parallel
 
 The table below shows the changes that we chose to go from serial to parallel. 
 
@@ -263,7 +263,7 @@ The table below shows the changes that we chose to go from serial to parallel.
 | **Serial Code** | **Parallel MPI Code** | **Explanation** |
 |-----------------|------------------------|-----------------|
 | `#define N 1000` | `#define N 10000000` | Define the problem size. In parallel, we chose N to be much larger, since the work is distributed. |
-| `double a[N], b[N], dot = 0.0;` | `double *a = NULL, *b = NULL; double local_dot = 0.0, global_dot = 0.0;` | The serial code's arrays are allocated on the stack, though we could have allocated time dynamically. For the  parallel code, we chose dynamically allocated (heap) arrays so they can scale and be distributed at run time. A global and local dot variable are used. |
+| `double a[N], b[N], dot = 0.0;` | `double *a = NULL, *b = NULL; double local_dot = 0.0, global_dot = 0.0;` | The serial code's arrays are allocated on the stack, though we could have allocated them dynamically. For the  parallel code, we chose dynamically allocated (heap) arrays so they can scale and be distributed at run time. A global and local dot variable are used. |
 | `for (int i = 0; i < N; i++) {a[i] = . . b[i] = . . . dot+= . . .; }` | - Rank 0 initializes the full vectors `a` and `b` with malloc. <br> - `MPI_Scatter` distributes chunks of arrays to all processes (`a_local`, `b_local`). <br> - Each process computes its portion: `for (int i=0; i<chunk; i++) local_dot += a_local[i] * b_local[i];` | The serial loop does initialization and computation in one loop. In MPI, initialization is centralized on rank 0, then distributed. Each process computes only its slice of the work. |
 | `dot += a[i] * b[i];` (inside loop) | `local_dot += a_local[i] * b_local[i];` | In parallel, each process keeps a **local partial sum** instead of the global sum. |
 | `printf("Dot product: %f\n", dot);` | `MPI_Reduce(&local_dot, &global_dot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); if (rank==0) printf("Global dot product: %f\n", global_dot);` | Instead of directly printing the result, MPI gathers all partial results and reduces them into a single global result on rank 0, which then prints. |
@@ -272,20 +272,21 @@ The table below shows the changes that we chose to go from serial to parallel.
 
 
 
-## Hands-on Dot Product Exercise
+## Hands-On Dot Product Exercise
 
-A version of this code with execution timers that allows you to set `N` (the number of elements) and `NP` (the number of MPI processes) from a batch script is available here:
+For this exercise, we will time the parallel dot product code while it runs with different numbers of processors dividing the work. You will run it with 1, 2, 4, and 8 processes, timing each run to see how the performance changes.
+
+A version of this code that allows you to set N (the number of elements) and NP (the number of MPI processes) from a batch script, and also includes code execution timing, is available here:
 
 ```
 mpi_parallel/dot_product 
 ```
 
-For this exercise, you will adjust the code to run with different numbers of processes and observe the speedup.
-
+Follow the steps below to complete the code timing study:
 
 ### Steps
 
-1. Change into the directory:
+1. Change into the directory with the parallel dot product code:
 
    ```
    cd dot_product/
@@ -325,7 +326,6 @@ For this exercise, you will adjust the code to run with different numbers of pro
 
 - Remember that communication between processes adds overhead to code execution.  
   - Why might the code not continue to speed up as you add more processes?  
-  - How does the ratio of computation to communication affect the parallel efficiency?
 
 
 # Vector Addition - your turn! 
