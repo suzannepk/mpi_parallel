@@ -265,7 +265,7 @@ The table below shows the changes that we chose to go from serial to parallel.
 | `#define N 1000` | `#define N 10000000` | Define the problem size. In parallel, we chose N to be much larger, since the work is distributed. |
 | `double a[N], b[N], dot = 0.0;` | `double *a = NULL, *b = NULL; double local_dot = 0.0, global_dot = 0.0;` | The serial code's arrays are allocated on the stack, though we could have allocated them dynamically. For the  parallel code, we chose dynamically allocated (heap) arrays so they can scale and be distributed at run time. A global and local dot variable are used. |
 | `for (int i = 0; i < N; i++) {a[i] = . . b[i] = . . . dot+= . . .; }` | - Rank 0 initializes the full vectors `a` and `b` with malloc. <br> - `MPI_Scatter` distributes chunks of arrays to all processes (`a_local`, `b_local`). <br> - Each process computes its portion: `for (int i=0; i<chunk; i++) local_dot += a_local[i] * b_local[i];` | The serial loop does initialization and computation in one loop. In MPI, initialization is centralized on rank 0, then distributed. Each process computes only its slice of the work. |
-| `dot += a[i] * b[i];` (inside loop) | `local_dot += a_local[i] * b_local[i];` | In parallel, each process keeps a **local partial sum** instead of the global sum. |
+| `dot += a[i] * b[i];` (inside loop) | `local_dot += a_local[i] * b_local[i];` | In parallel, each process keeps a local partial sum instead of the global sum. |
 | `printf("Dot product: %f\n", dot);` | `MPI_Reduce(&local_dot, &global_dot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); if (rank==0) printf("Global dot product: %f\n", global_dot);` | Instead of directly printing the result, MPI gathers all partial results and reduces them into a single global result on rank 0, which then prints. |
 | `return 0;` | `MPI_Finalize(); return 0;` | Serial just exits. MPI must finalize the environment before exiting. |
 
@@ -372,7 +372,7 @@ int main() {
 }
 ```
 
-## Hands-On Series to Parallel
+## Hands-On Serial to Parallel
 
 There are a few different ways to make this code parallel with MPI. If you want to solve it in the same way that we showed for the dot product example, you can use the code below. You are welcome to try different methods too.  
 
