@@ -26,7 +26,7 @@ b = [8, 7, 6, 5, 4, 3, 2, 1]
 
 Total dot product:
 
-  = 1*8 + 2*7 + 3*6 + 4*5 + 5*4 + 6*3 + 7*2 + 8*1
+  = 1\*8 + 2\*7 + 3\*6 + 4\*5 + 5\*4 + 6\*3 + 7\*2 + 8\*1
   = 120
 
 Here is how that can be implemented in serial C code. 
