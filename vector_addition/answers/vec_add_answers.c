@@ -46,8 +46,8 @@ int main(int argc, char** argv) {
         b = malloc(N * sizeof(double));   // Allocate full vector b
         c = malloc(N * sizeof(double));   // Allocate full result vector c
         for (int i = 0; i < N; i++) {
-            a[i] = i * 0.5;               // Initialize a[i]
-            b[i] = i * 2.0;               // Initialize b[i]
+            a[i] = i + 1;               // Initialize a[i]
+            b[i] = N - i;               // Initialize b[i]
         }
     }
 
