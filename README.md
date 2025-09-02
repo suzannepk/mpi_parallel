@@ -126,8 +126,18 @@ global_dot = 22 + 38 + 38 + 22 = 120
 
 
 ## The Parallel Dot Product Code
+
+The Message Passing Interface (MPI) is a set of library functions, methods, and specifications that can be called to distribute a code's processing work between nodes or processors on the same node. It does this by passing messages between the processors. It is governed by a set of community driven standards. 
+
 The next sections will walk you through the MPI functions and code that we have used to implement the dot product in parallel.
 The code is given at the end of the explanation. 
+
+The basic flow of MPI within in a program is:
+
+- Initialize communication
+- Communicate between processes to share data
+- Exit the communication
+
 
 ## Initializing MPI  
 
