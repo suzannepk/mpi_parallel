@@ -34,8 +34,8 @@ int main(int argc, char** argv) {
         a = malloc(N * sizeof(double));   // Allocate full vector a
         b = malloc(N * sizeof(double));   // Allocate full vector b
         for (int i = 0; i < N; i++) {
-            a[i] = i * 0.5;               // Initialize a[i]
-            b[i] = i * 2.0;               // Initialize b[i]
+            a[i] = i + 1;               // Initialize a[i]
+            b[i] = N - 1 ;               // Initialize b[i]
         }
     }
 
