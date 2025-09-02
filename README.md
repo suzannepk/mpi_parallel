@@ -43,8 +43,8 @@ int main() {
     double a[N], b[N], dot = 0.0;  // Declare arrays a and b of size N on the stack, and initialize dot to 0.0
 
     for (int i = 0; i < N; i++) {  // Loop over each index from 0 to N-1
-        a[i] = i + 1;            // Fill array a with values: a[i] = i * 0.5
-        b[i] = N - i;            // Fill array b with values: b[i] = i * 2.0
+        a[i] = i + 1;            // Fill array a with values
+        b[i] = N - i;            // Fill array b with values
         dot += a[i] * b[i];        // Accumulate the product of a[i] and b[i] into dot
     }
 
