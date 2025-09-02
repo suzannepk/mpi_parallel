@@ -43,8 +43,8 @@ int main() {
     double a[N], b[N], dot = 0.0;  // Declare arrays a and b of size N on the stack, and initialize dot to 0.0
 
     for (int i = 0; i < N; i++) {  // Loop over each index from 0 to N-1
-        a[i] = i * 0.5;            // Fill array a with values: a[i] = i * 0.5
-        b[i] = i * 2.0;            // Fill array b with values: b[i] = i * 2.0
+        a[i] = i + 1;            // Fill array a with values: a[i] = i * 0.5
+        b[i] = N - i;            // Fill array b with values: b[i] = i * 2.0
         dot += a[i] * b[i];        // Accumulate the product of a[i] and b[i] into dot
     }
 
@@ -213,8 +213,8 @@ int main(int argc, char** argv) {
         a = malloc(N * sizeof(double));   // Allocate memory for vector a
         b = malloc(N * sizeof(double));   // Allocate memory for vector b
         for (int i = 0; i < N; i++) {
-            a[i] = i * 0.5;               // Fill vector a with sample values
-            b[i] = i * 2.0;               // Fill vector b with sample values
+            a[i] = i + 1;               // Fill vector a with sample values
+            b[i] = N - i;               // Fill vector b with sample values
         }
     }
 
@@ -358,8 +358,8 @@ int main() {
     double a[N], b[N], c[N];
 
     for (int i = 0; i < N; i++) {
-        a[i] = i * 0.5;
-        b[i] = i * 2.0;
+        a[i] = i + 1 ;
+        b[i] = N - i;
         c[i] = a[i] + b[i];
     }
 
