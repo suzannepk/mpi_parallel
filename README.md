@@ -205,7 +205,8 @@ int main(int argc, char** argv) {
     // Initialize the MPI environment
     MPI_Init(&argc, &argv);
 
-    // Set up to the MPI Communicator and get the rank of the current process and the total number of processes
+    // Set up to the MPI Communicator and get the
+    // rank of the current process and the total number of processes
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
