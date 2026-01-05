@@ -90,6 +90,11 @@ These are not physical locations in memory, but two different ways the C compile
 
 ## Parallel Thinking
 
+<br>
+<center>
+<img src="images/dot_loop.png" width="500" height="500">
+</center>
+<br>
 - Imagine our class is dividing the work of calculating a dot product.  
 - Each person gets a "chunk" of the dot product to calculate, so most of the work can be done in parallel.  
 - One person is then responsible for gathering all the chunks and adding the results together.  
