@@ -169,9 +169,19 @@ The programmer must use logic based on the rank ID to determine which code path 
 The way we will implement the parallel dot product in the code below also uses two more MPI functions: MPI_Scatter and MPI_Reduce.  
 
 - **MPI_Scatter**: Splits a large dataset into smaller chunks and sends one chunk to each process.  
-  - Example: If you have 8 elements and 4 processes, each process gets 2 elements.  
+  - Example: If you have 8 elements and 4 processes, each process gets 2 elements.
+<br>
+<center>
+<img src="images/mpi_scatter.png" width="500" height="500">
+</center>
+<br>
 
-- **MPI_Reduce**: A collective MPI operation that combines (reduces) values from all processes in a communicator using an operation (such as sum, max, min, etc.) and delivers the single result only to the root process.  
+- **MPI_Reduce**: A collective MPI operation that combines (reduces) values from all processes in a communicator using an operation (such as sum, max, min, etc.) and delivers the single result only to the root process.
+<br>
+<center>
+<img src="images/MPI_reduce.png" width="500" height="500">
+</center>
+<br>
 
 ## Distributed Memory in Practice
 
@@ -351,7 +361,11 @@ Follow the steps below to complete the code timing study:
 
 
 # Vector Addition - your turn! 
-
+<br>
+<center>
+<img src="images/vec_add_simp.png" width="500" height="500">
+</center>
+<br>
 
 Now it’s your turn. We are going to perform a vector addition.
 
@@ -420,6 +434,13 @@ Parallelization Plan with MPI (Scatter and Gather)
 - Print results (rank 0).
 - Free all heap memory.
 - Finalize MPI.
+
+<br>
+<center>
+<img src="images/Vec_add.png" width="500" height="500">
+</center>
+<br>
+
 
 # Vector Addition Exercise
 
