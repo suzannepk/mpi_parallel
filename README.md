@@ -12,6 +12,12 @@ By the end, you’ll see how MPI lets multiple processes work together using dis
 
 ## The Dot Product
 
+<br>
+<center>
+<img src="images/dot.png" width="500" height="500">
+</center>
+<br>
+
 We want to compute the dot product of two vectors `a` and `b` of size `N`:
 
 dot = a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + ... + a[N-1]*b[N-1]
