@@ -35,6 +35,22 @@ Total dot product:
   = 1\*8 + 2\*7 + 3\*6 + 4\*5 + 5\*4 + 6\*3 + 7\*2 + 8\*1
   = 120
 
+### Comprehension Check 1
+
+**What is the dot product of `[2, 3]` and `[4, 5]`?**
+
+- A. 14
+- B. 18
+- C. 23
+- D. `[8, 15]`
+
+<details>
+<summary>Show answer</summary>
+
+**C. 23.** Multiply corresponding elements and add the products: `2 * 4 + 3 * 5 = 23`.
+
+</details>
+
 Here is how that can be implemented in serial C code. 
 
 ## Serial C Code for Dot Product
@@ -60,6 +76,22 @@ int main() {
 }
 
 ```
+
+### Comprehension Check 2
+
+**Which part of the dot product can be calculated independently?**
+
+- A. Each individual multiplication
+- B. Printing the final answer
+- C. Updating one shared `dot` variable simultaneously
+- D. None of the calculation
+
+<details>
+<summary>Show answer</summary>
+
+**A. Each individual multiplication.** The products can be calculated independently, but their results must eventually be added together.
+
+</details>
 
 ### Note on Serial and Parallel Execution  
 
@@ -109,14 +141,46 @@ To split the work evenly:
 
 Each process will handle 2 elements of the dot product.  
 
+### Comprehension Check 3
+
+**With 12 elements and 4 people, what is the chunk size?**
+
+- A. 2
+- B. 3
+- C. 4
+- D. 48
+
+<details>
+<summary>Show answer</summary>
+
+**B. 3.** The 12 elements are divided evenly among 4 people, so `12 / 4 = 3`.
+
+</details>
+
 We also organize our processes into ranks (process IDs) to make it easier for the gatherer to track them.  
+
+### Comprehension Check 4
+
+**If there are 4 processes, which list contains all their MPI ranks?**
+
+- A. 1, 2, 3, 4
+- B. 0, 1, 2, 3
+- C. 0, 1, 2, 3, 4
+- D. 4 only
+
+<details>
+<summary>Show answer</summary>
+
+**B. 0, 1, 2, 3.** MPI ranks start at 0, so a group of four processes has ranks 0 through 3.
+
+</details>
 
 | Rank (Process) | Global Index range |       Operation                  |
 |----------------|--------------------|----------------------------------|
-| Rank 1         | 0–1                | `a[0]*b[0] + a[1]*b[1]`          |
-| Rank 2         | 2–3                | `a[2]*b[2] + a[3]*b[3]`          |
-| Rank 3         | 4–5                | `a[4]*b[4] + a[5]*b[5]`          |
-| Rank 4         | 6–7                | `a[6]*b[6] + a[7]*b[7]`          |
+| Rank 0         | 0–1                | `a[0]*b[0] + a[1]*b[1]`          |
+| Rank 1         | 2–3                | `a[2]*b[2] + a[3]*b[3]`          |
+| Rank 2         | 4–5                | `a[4]*b[4] + a[5]*b[5]`          |
+| Rank 3         | 6–7                | `a[6]*b[6] + a[7]*b[7]`          |
 
 Each process computes its own **local dot product**, and then we combine all the local results into a single global value:
 
@@ -128,10 +192,10 @@ global_dot = local_Rank0 + local_Rank1 + local_Rank2 + local_Rank3
 
 | Rank | Elements            | Calculation  | local_dot |
 |------|---------------------|--------------|-----------|
-| 1    | a[0]b[0] + a[1]b[1] | 1×8 + 2×7    | 22        |
-| 2    | a[2]b[2] + a[3]b[3] | 3×6 + 4×5    | 38        |
-| 3    | a[4]b[4] + a[5]b[5] | 5×4 + 6×3    | 38        |
-| 4    | a[6]b[6] + a[7]b[7] | 7×2 + 8×1    | 22        |
+| 0    | a[0]b[0] + a[1]b[1] | 1×8 + 2×7    | 22        |
+| 1    | a[2]b[2] + a[3]b[3] | 3×6 + 4×5    | 38        |
+| 2    | a[4]b[4] + a[5]b[5] | 5×4 + 6×3    | 38        |
+| 3    | a[6]b[6] + a[7]b[7] | 7×2 + 8×1    | 22        |
 
 global_dot = 22 + 38 + 38 + 22 = 120
 
@@ -176,12 +240,79 @@ The way we will implement the parallel dot product in the code below also uses t
 </center>
 <br>
 
-- **MPI_Reduce**: A collective MPI operation that combines (reduces) values from all processes in a communicator using an operation (such as sum, max, min, etc.) and delivers the single result only to the root process.
+- <strong><code>MPI_Reduce</code></strong>: A collective MPI operation that combines (reduces) values from all processes in a communicator using an operation (such as sum, max, min, etc.) and delivers the single result only to the root process.
+
 <br>
 <center>
 <img src="images/MPI_reduce.png" width="500" height="500">
 </center>
 <br>
+
+### Comprehension Check 5
+
+Here is the function signature for `MPI_Scatter`:
+
+```c
+int MPI_Scatter(
+    const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+    void *recvbuf, int recvcount, MPI_Datatype recvtype,
+    int root, MPI_Comm comm
+);
+```
+
+Consider this example call:
+
+```c
+MPI_Scatter(a, 100, MPI_DOUBLE,
+            a_local, 100, MPI_DOUBLE,
+            0, MPI_COMM_WORLD);
+```
+
+**What do the two values of `100` represent?**
+
+- A. 100 bytes are distributed altogether
+- B. Rank 100 sends and receives the data
+- C. 100 elements are sent to and received by each process
+- D. 100 processes participate
+
+<details>
+<summary>Show answer</summary>
+
+**C. 100 elements are sent to and received by each process.** The first `100` is `sendcount`, and the second is `recvcount`. They count elements of type `MPI_DOUBLE`, not bytes.
+
+</details>
+
+### Comprehension Check 6
+
+Here is the function signature for `MPI_Reduce`:
+
+```c
+int MPI_Reduce(
+    const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+    MPI_Op op, int root, MPI_Comm comm
+);
+```
+
+Consider this example call from our dot product code:
+
+```c
+MPI_Reduce(&local_dot, &global_dot, 1, MPI_DOUBLE,
+           MPI_SUM, 0, MPI_COMM_WORLD);
+```
+
+**What do the parameters `1`,** `MPI_SUM`**, and `0` mean in this call?**
+
+- A. Use one process, multiply the values, and send them to rank 0
+- B. Combine one value from each process by adding and store the result on rank 0
+- C. Combine one value from rank 0 and distribute the result to all processes
+- D. Sum all values and distribute the result to all processes
+
+<details>
+<summary>Show answer</summary>
+
+**B. Combine one value from each process by adding and store the result on rank 0.** The `1` is the count (number of elements each process contributes), `MPI_SUM` is the reduction operation (addition), and `0` identifies the root process that receives the final result.
+
+</details>
 
 ## Distributed Memory in Practice
 
@@ -197,15 +328,48 @@ To make this work:
 - Each process has its own local arrays and local indices.  
 - The global indices are mapped to local ones, so each process only handles its part of the data.  
 
+### Comprehension Check 7
+
+**In a distributed-memory MPI program, if rank 2 changes the value of** `a_local[0]`**, what happens to rank 1's** `a_local[0]`**?**
+
+- A. It changes automatically because they share the same communicator
+- B. It changes after the next MPI\_Barrier synchronization
+- C. Nothing; each rank has its own separate memory space
+- D. It changes only if rank 1 calls MPI\_Recv
+
+<details>
+<summary>Show answer</summary>
+
+**C. Nothing; each rank has its own separate memory space.** In distributed-memory parallelism, each MPI process has completely separate memory. Changes to one process's local variables do not affect another process's variables, even if they have the same name. Data must be explicitly communicated between processes using MPI functions.
+
+</details>
+
 ## Work Division for Dot Product
 
 | Index Range (Global) | Rank | Local Index | Operation (Global Index)  | Operation (Local Index)                             | Calculation  | Result |   
 |----------------------|------|-------------|---------------------------|-----------------------------------------------------|--------------|--------|
-| 0–1                  | 1    | 0, 1        | `a[0]b[0] + a[1]b[1]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 1×8 + 2×7    | 22     |
-| 2–3                  | 2    | 0, 1        | `a[2]b[2] + a[3]b[3]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 3×6 + 4×5    | 38     |
-| 4–5                  | 3    | 0, 1        | `a[4]b[4] + a[5]b[5]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 5×4 + 6×3    | 38     |
-| 6–7                  | 4    | 0, 1        | `a[6]b[6] + a[7]b[7]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 7×2 + 8×1    | 22     |
+| 0–1                  | 0    | 0, 1        | `a[0]b[0] + a[1]b[1]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 1×8 + 2×7    | 22     |
+| 2–3                  | 1    | 0, 1        | `a[2]b[2] + a[3]b[3]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 3×6 + 4×5    | 38     |
+| 4–5                  | 2    | 0, 1        | `a[4]b[4] + a[5]b[5]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 5×4 + 6×3    | 38     |
+| 6–7                  | 3    | 0, 1        | `a[6]b[6] + a[7]b[7]`     | `a_local[0] * b_local[0] + a_local[1] * b_local[1]` | 7×2 + 8×1    | 22     |
 
+### Comprehension Check 8
+
+Looking at the table above, rank 2 receives the elements at global indices 4 and 5. 
+
+**Which local index range does rank 2 use to access these elements in its** `a_local` **and** `b_local` **arrays?**
+
+- A. 0–1
+- B. 2–3
+- C. 4–5
+- D. 6–7
+
+<details>
+<summary>Show answer</summary>
+
+**A. 0–1.** Each process stores its chunk in its own local array starting at local index 0. So rank 2's local array `a_local[0]` holds the value from global `a[4]`, and `a_local[1]` holds the value from global `a[5]`. This allows each process to use simple, zero-based indexing for its own portion of the data.
+
+</details>
 
 Below is the code. Please read the comments in the code. There are other ways to implement this with MPI, but we have chosen this one to be as close to the parallel thinking example as possible. You will use this example to help you parallelize a vector addition code later in the tutorial. 
 
@@ -352,6 +516,22 @@ Follow the steps below to complete the code timing study:
 
 5. Record the number of processors and the execution time for each run and note at what processor count the speedup levels off.
 
+### Comprehension Check 9
+
+**When you run the parallel dot product program with different numbers of processes (1, 2, 4, 8, 16), what should happen to the final dot product answer?**
+
+- A. It should increase proportionally to the number of processes
+- B. It should decrease as the chunk size per process decreases
+- C. It should remain the same
+- D. It should change due to different reduction order
+
+<details>
+<summary>Show answer</summary>
+
+**C. It should remain the same.** Changing the number of processes only changes how the work is divided among processors, not the mathematical result. Each process still computes its portion correctly, and `MPI_Reduce` correctly sums all the partial results. The execution time may change, but the answer should always be identical regardless of how many processes are used.
+
+</details>
+
 ---
 
 ### Discussion Questions
@@ -417,23 +597,39 @@ Using Scatter and Gather Method
 ## MPI Scatter and Gather 
 The two MPI functions that may be useful for this are MPI_Scatter and MPI_Gather.  
 
-- **MPI_Scatter**: Splits a large dataset into smaller chunks and sends one chunk to each process.  
+- <strong><code>MPI_Scatter</code></strong>: Splits a large dataset into smaller chunks and sends one chunk to each process.  
   - Example: If you have 8 elements and 4 processes, each process gets 2 elements.  
 
-- **MPI_Gather**: Collects data from all processes and assembles it back into a single dataset on the root process.  
+- <strong><code>MPI_Gather</code></strong>: Collects data from all processes and assembles it back into a single dataset on the root process.  
   - Example: Each process computes a partial result, and `MPI_Gather` collects all of them into one array at the root.  
 
 
-Parallelization Plan with MPI (Scatter and Gather)
+### Parallelization Plan with MPI (Scatter and Gather)
 - Initialize MPI.
-- Determine the chunk size for each process: chunk = N / size.
-- Allocate local arrays (a_local, b_local, c_local) on the heap.
+- Determine the chunk size for each process: `chunk = N / size`.
+- Allocate local arrays (`a_local, b_local, c_local`) on the heap.
 - Scatter chunks of a and b to each process.
-- Each process computes its local vector addition: c_local[i] = a_local[i] + b_local[i].
+- Each process computes its local vector addition: `c_local[i] = a_local[i] + b_local[i]`.
 - Gather all c_local chunks back to the root process.
 - Print results (rank 0).
 - Free all heap memory.
 - Finalize MPI.
+
+### Comprehension Check 10
+
+**Which sequence correctly orders the key operations for parallel vector addition using MPI?**
+
+- A. Gather input data, perform local addition, Scatter results
+- B. Perform local addition, Scatter input data, Gather results
+- C. Scatter input data, perform local addition, Gather results
+- D. Scatter input data, Gather input data, perform local addition
+
+<details>
+<summary>Show answer</summary>
+
+**C. Scatter input data, perform local addition, Gather results.** First, use `MPI_Scatter` to distribute chunks of the input vectors (a and b) to each process. Then, each process independently computes its local portion of the vector addition (`c_local[i] = a_local[i] + b_local[i]`). Finally, use `MPI_Gather` to collect all the local results back into the complete result vector on the root process.
+
+</details>
 
 <br>
 <center>
